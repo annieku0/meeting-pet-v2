@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Pet — Feed Together</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="feeding.css" />
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="paw">🐾</span>
+      <div class="pet-info">
+        <div id="tb-pet-name" class="tb-pet-name">Loading...</div>
+        <div id="tb-project-name" class="tb-project-name"></div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="health-wrap">
+        <span class="health-label">HEALTH</span>
+        <div class="health-bar-track">
+          <div id="health-bar-fill" class="health-bar-fill" style="width:0%"></div>
+        </div>
+        <span id="health-pct" class="health-pct">0</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div id="members-display" class="members-display"></div>
+      <div id="stage-badge" class="stage-badge">BABY</div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- SCENE -->
+    <div class="scene-wrap">
+      <canvas id="scene-canvas"></canvas>
+
+      <!-- Treat overlay (draggable treats float over canvas) -->
+      <div id="treat-overlay" class="treat-overlay"></div>
+
+      <!-- Feed zone indicator (shows when dragging) -->
+      <div id="feed-zone" class="feed-zone hidden"></div>
+
+      <!-- Pet reaction popup -->
+      <div id="pet-reaction" class="pet-reaction hidden"></div>
+    </div>
+
+    <!-- TREAT PANEL -->
+    <div class="treat-panel">
+      <div class="panel-title">TREATS TO FEED</div>
+      <div class="panel-hint">Drag a treat to your pet!</div>
+
+      <div id="treat-shelf" class="treat-shelf">
+        <!-- Treat stacks rendered by JS -->
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <div class="fed-section">
+        <div class="fed-title">ALREADY FED</div>
+        <div id="fed-list" class="fed-list"></div>
+      </div>
+
+      <div class="panel-spacer"></div>
+
+      <div class="share-section">
+        <div class="share-label">INVITE YOUR TEAM</div>
+        <div class="share-row">
+          <div id="invite-code" class="invite-code">——</div>
+          <button class="btn-copy-code" id="btn-copy-invite">COPY</button>
+        </div>
+      </div>
+
+      <button class="btn-done" id="btn-done-feeding">✦ DONE FEEDING</button>
+    </div>
+  </div>
+
+  <!-- GROWTH TOAST -->
+  <div id="growth-toast" class="growth-toast hidden">
+    <div class="toast-emoji">🌟</div>
+    <div class="toast-text"></div>
+  </div>
+
+  <!-- ALL FED CELEBRATION -->
+  <div id="celebration" class="celebration hidden">
+    <div class="cele-content">
+      <canvas id="cele-pet-canvas" class="cele-pet-canvas"></canvas>
+      <div class="cele-title">YOUR PET IS FULL!</div>
+      <div class="cele-sub">See you next meeting 🐾</div>
+      <button class="btn-cele-close" id="btn-cele-close">✦ CLOSE FEEDING ROOM</button>
+    </div>
+  </div>
+
+  <script src="firebase-config.js?v=2"></script>
+  <script src="pets.js?v=2"></script>
+  <script src="treats.js?v=2"></script>
+  <script src="db.js?v=2"></script>
+  <script src="feeding.js?v=2"></script>
+</body>
+</html>

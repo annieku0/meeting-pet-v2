@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Meeting Pet — Reset</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #0E0A1A; color: #E8D8FF;
+      font-family: 'Press Start 2P', monospace; font-size: 8px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; margin: 0;
+    }
+    .box {
+      background: #1A1228; border: 3px solid #3A2858;
+      padding: 40px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      max-width: 400px;
+    }
+    .title { font-size: 14px; color: #C060FF; text-shadow: 2px 2px 0 #5A0090; }
+    .sub   { font-size: 7px; color: #7860A8; line-height: 2; }
+    .btn {
+      background: #C060FF; color: #1A0030; border: none;
+      font-family: 'Press Start 2P', monospace; font-size: 9px;
+      padding: 12px 20px; cursor: pointer;
+      box-shadow: 3px 3px 0 #5A0090; width: 100%;
+    }
+    .btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #5A0090; }
+    .btn-cancel {
+      background: transparent; color: #7860A8;
+      border: 2px solid #3A2858; font-family: 'Press Start 2P', monospace;
+      font-size: 8px; padding: 10px; cursor: pointer; width: 100%;
+    }
+    .btn-cancel:hover { color: #E8D8FF; border-color: #7860A8; }
+    .done { font-size: 8px; color: #40E080; display: none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div style="font-size:40px">🐾</div>
+    <div class="title">RESET</div>
+    <div class="sub">
+      This will clear all pets, sessions,<br>
+      and meeting data so you can<br>
+      start fresh from the beginning.
+    </div>
+    <button class="btn" id="btn-reset">▸ RESET EVERYTHING</button>
+    <button class="btn-cancel" onclick="history.back()">← CANCEL</button>
+    <div class="done" id="done-msg">✓ Done! You can close this tab.</div>
+  </div>
+  <script>
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      localStorage.clear();
+      document.getElementById('btn-reset').style.display = 'none';
+      document.getElementById('done-msg').style.display = 'block';
+      setTimeout(() => { window.location.href = 'popup.html'; }, 1500);
+    });
+  </script>
+</body>
+</html>

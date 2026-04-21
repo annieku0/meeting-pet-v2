@@ -1,0 +1,208 @@
+/* Meeting Pet — Profile Page */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #0E0A1A; --bg2: #1A1228; --bg3: #241A38;
+  --border: #3A2858; --accent: #C060FF; --accent2: #FF8040;
+  --text:   #E8D8FF; --dim: #7860A8; --dark: #3A2858;
+  --green:  #40E080; --yellow: #FFD040; --red: #FF4050;
+  --pixel:  'Press Start 2P', monospace;
+}
+
+html, body {
+  min-height: 100vh; background: var(--bg);
+  color: var(--text); font-family: var(--pixel); font-size: 8px;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Login ── */
+.login-wrap {
+  max-width: 400px; margin: 80px auto;
+  padding: 40px 32px;
+  background: var(--bg2); border: 3px solid var(--bg3);
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  text-align: center;
+}
+.login-logo { font-size: 48px; }
+.login-title { font-size: 16px; color: var(--accent); text-shadow: 2px 2px 0 #5A0090; }
+.login-sub   { font-size: 7px; color: var(--dim); line-height: 1.8; }
+.login-form  { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.login-note  { font-size: 6px; color: var(--dark); }
+.login-error { font-size: 7px; color: var(--red); min-height: 14px; }
+
+/* ── Profile ── */
+.profile-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; background: var(--bg2); border-bottom: 3px solid var(--bg3);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.user-avatar {
+  width: 40px; height: 40px;
+  background: var(--accent); color: #1A0030;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+  text-shadow: none;
+}
+.user-name { font-size: 11px; color: var(--accent2); }
+.user-sub  { font-size: 6px; color: var(--dim); margin-top: 4px; }
+.header-actions { display: flex; gap: 8px; }
+.btn-icon {
+  background: var(--bg3); border: 2px solid var(--border);
+  color: var(--dim); font-size: 14px; width: 32px; height: 32px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex; border-bottom: 3px solid var(--bg3);
+  background: var(--bg2);
+}
+.tab {
+  flex: 1; padding: 12px 8px;
+  background: transparent; border: none; border-bottom: 3px solid transparent;
+  font-family: var(--pixel); font-size: 7px; color: var(--dim);
+  cursor: pointer; letter-spacing: 0.5px;
+  margin-bottom: -3px;
+  transition: color 0.1s, border-color 0.1s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-content { display: none; padding: 16px 20px; }
+.tab-content.active { display: block; }
+
+.section-hint { font-size: 7px; color: var(--dim); line-height: 1.8; margin-bottom: 14px; }
+
+/* ── Pet cards ── */
+.pets-list { display: flex; flex-direction: column; gap: 12px; }
+
+.empty-state { font-size: 7px; color: var(--dark); padding: 24px 0; text-align: center; }
+
+.pet-card {
+  background: var(--bg2); border: 2px solid var(--bg3);
+  display: grid; grid-template-columns: 72px 1fr auto;
+  align-items: center; gap: 12px; padding: 12px 14px;
+  transition: border-color 0.1s;
+}
+.pet-card:hover { border-color: var(--border); }
+
+.pet-card-canvas { image-rendering: pixelated; display: block; }
+
+.pet-card-info { display: flex; flex-direction: column; gap: 5px; }
+.pet-card-name { font-size: 10px; color: var(--accent2); }
+.pet-card-project { font-size: 7px; color: var(--text); }
+.pet-card-meta { font-size: 6px; color: var(--dim); line-height: 1.8; }
+
+.health-mini {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+}
+.health-mini-bar {
+  width: 60px; height: 6px;
+  background: var(--bg3); border: 1px solid var(--dark); overflow: hidden;
+}
+.health-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--yellow));
+}
+.health-mini-label { font-size: 6px; color: var(--dim); }
+.stage-mini {
+  font-size: 6px; padding: 2px 5px;
+  background: var(--accent); color: #1A0030;
+  margin-top: 4px;
+}
+
+.pet-card-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.btn-card {
+  background: transparent; border: 2px solid var(--border);
+  color: var(--dim); font-family: var(--pixel); font-size: 6px;
+  padding: 5px 8px; cursor: pointer; white-space: nowrap;
+}
+.btn-card:hover { border-color: var(--accent); color: var(--accent); }
+.btn-card.primary { border-color: var(--accent); color: var(--accent); }
+.btn-card.primary:hover { background: var(--accent); color: #1A0030; }
+
+.pet-card.retired { opacity: 0.7; }
+.pet-card.retired .pet-card-name { color: var(--dim); }
+.retired-badge {
+  font-size: 6px; color: var(--dim);
+  border: 1px solid var(--dark); padding: 2px 5px;
+}
+
+/* ── Forms ── */
+.form-card {
+  background: var(--bg2); border: 2px solid var(--bg3);
+  padding: 16px;
+}
+.form-card-title { font-size: 8px; color: var(--accent); margin-bottom: 14px; letter-spacing: 1px; }
+.form-hint { font-size: 7px; color: var(--dim); line-height: 1.8; margin-bottom: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.form-row { display: flex; gap: 12px; }
+.flex1 { flex: 1; }
+.form-status { font-size: 7px; color: var(--green); min-height: 14px; margin-top: 6px; }
+.form-status.error { color: var(--red); }
+
+.px-label { font-size: 7px; color: var(--dim); }
+.px-input {
+  background: var(--bg); border: 2px solid var(--border);
+  color: var(--text); font-family: var(--pixel); font-size: 8px;
+  padding: 8px 10px; outline: none; width: 100%;
+}
+.px-input:focus { border-color: var(--accent); }
+.px-input::placeholder { color: var(--dark); }
+
+.px-select {
+  background: var(--bg); border: 2px solid var(--border);
+  color: var(--text); font-family: var(--pixel); font-size: 7px;
+  padding: 8px 10px; outline: none; width: 100%; cursor: pointer;
+  appearance: none;
+}
+.px-select:focus { border-color: var(--accent); }
+
+/* Mini pet grid (for new project) */
+.mini-pet-grid {
+  display: grid; grid-template-columns: repeat(8, 1fr);
+  gap: 4px; margin-bottom: 6px;
+}
+.mini-pet-cell {
+  background: var(--bg3); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  padding: 3px; cursor: pointer; aspect-ratio: 1;
+}
+.mini-pet-cell canvas { image-rendering: pixelated; display: block; }
+.mini-pet-cell:hover { border-color: var(--accent); }
+.mini-pet-cell.selected { border-color: var(--accent); background: var(--bg2);
+  box-shadow: 0 0 0 1px var(--accent); }
+.mini-sel-name { font-size: 7px; color: var(--accent2); min-height: 12px; margin-bottom: 4px; }
+
+.btn-primary {
+  background: var(--accent); color: #1A0030; border: none;
+  font-family: var(--pixel); font-size: 8px; padding: 10px;
+  cursor: pointer; width: 100%; letter-spacing: 1px;
+  box-shadow: 3px 3px 0 #5A0090;
+}
+.btn-primary:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #5A0090; }
+
+.btn-secondary {
+  background: transparent; color: var(--accent); border: 2px solid var(--accent);
+  font-family: var(--pixel); font-size: 8px; padding: 10px;
+  cursor: pointer; width: 100%; letter-spacing: 1px;
+  box-shadow: 2px 2px 0 #5A0090;
+}
+.btn-secondary:hover { background: var(--accent); color: #1A0030; }
+
+.btn-login {
+  background: var(--accent); color: #1A0030; border: none;
+  font-family: var(--pixel); font-size: 9px; padding: 11px;
+  cursor: pointer; width: 100%; letter-spacing: 1px;
+  box-shadow: 3px 3px 0 #5A0090; margin-top: 4px;
+}
+.btn-login:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #5A0090; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--dark); }

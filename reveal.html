@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Pet — Reveal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="reveal.css" />
+</head>
+<body>
+
+  <!-- CURTAIN -->
+  <div id="curtain" class="curtain">
+    <div class="curtain-content">
+      <div class="curtain-paw">🐾</div>
+      <div class="curtain-title">MEETING COMPLETE</div>
+      <div class="curtain-sub">Your pet is tallying the treats...</div>
+      <div class="curtain-loader"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- REVEAL PAGE -->
+  <div id="reveal-page" class="reveal-page hidden">
+
+    <!-- Header -->
+    <div class="reveal-header">
+      <div class="header-left">
+        <div class="app-label">🐾 MEETING PET</div>
+        <div id="meeting-title-h" class="meeting-title-h"></div>
+      </div>
+      <div class="header-right">
+        <div class="time-label">DURATION</div>
+        <div id="duration-display" class="duration-display">—</div>
+      </div>
+    </div>
+
+    <!-- Pet hero -->
+    <div class="pet-hero">
+      <div class="hero-bg"></div>
+      <canvas id="hero-pet-canvas" class="hero-canvas"></canvas>
+      <div id="hero-pet-name" class="hero-pet-name"></div>
+    </div>
+
+    <!-- Treat summary bar -->
+    <div class="treat-summary-bar">
+      <div class="summary-label">YOUR TEAM EARNED</div>
+      <div id="total-treats" class="total-treats-count">0</div>
+      <div class="summary-unit">TREATS</div>
+    </div>
+
+    <!-- Treats earned grid -->
+    <div class="section-heading">✦ TREATS COLLECTED</div>
+    <div id="treats-earned-grid" class="treats-earned-grid">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Treat legend -->
+    <div class="section-heading" style="margin-top: 28px">✦ TREAT LEGEND</div>
+    <div class="legend-intro">Each treat represents a moment of great cross-team communication.</div>
+    <div class="treats-legend" id="treats-legend">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Feed CTA -->
+    <div class="feed-cta-card" id="feed-cta">
+      <div class="feed-cta-left">
+        <canvas id="feed-cta-canvas" class="feed-cta-canvas"></canvas>
+      </div>
+      <div class="feed-cta-right">
+        <div class="feed-cta-title">TIME TO FEED YOUR PET!</div>
+        <div class="feed-cta-sub">Your team earned treats together — now feed them together. Each treat disappears once someone on the team feeds it.</div>
+        <button class="btn-feed" id="btn-feed-pet">🍎 OPEN FEEDING ROOM</button>
+      </div>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="reveal-footer">
+      <button class="btn-copy" id="btn-copy-report">📋 COPY REPORT</button>
+      <button class="btn-new" id="btn-new-meeting">▸ NEW MEETING</button>
+    </div>
+
+    <div class="footer-note">
+      Meeting Pet rewards great communication — not quantity. Reflect on what made this meeting work.
+    </div>
+
+  </div>
+
+  <script src="firebase-config.js?v=3"></script>
+  <script src="pets.js?v=3"></script>
+  <script src="treats.js?v=3"></script>
+  <script src="db.js?v=3"></script>
+  <script src="reveal.js?v=3"></script>
+</body>
+</html>

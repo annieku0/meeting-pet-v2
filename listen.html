@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Pet — Listening</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="listen.css" />
+</head>
+<body>
+
+  <!-- SETUP SCREEN: before capture starts -->
+  <div id="screen-setup" class="screen active">
+    <div class="setup-wrap">
+      <div class="setup-pet" id="setup-pet-canvas-wrap"></div>
+
+      <div class="setup-title">READY TO LISTEN</div>
+      <div id="setup-pet-name" class="setup-pet-name"></div>
+      <div id="setup-meeting-name" class="setup-meeting-name"></div>
+
+      <div class="setup-steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Click <strong>Start Listening</strong> below</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Browser will ask what to share — pick your <strong>Zoom / Meet tab</strong> and enable <strong>Share tab audio</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Your pet will listen silently. Treats are revealed at the end.</div>
+        </div>
+      </div>
+
+      <div class="setup-keys">
+        <div class="key-row">
+          <span class="key-dot" id="dot-deepgram"></span>
+          <span class="key-label">Deepgram API key</span>
+          <span class="key-status" id="status-deepgram">not set</span>
+        </div>
+        <div class="key-row">
+          <span class="key-dot" id="dot-anthropic"></span>
+          <span class="key-label">Anthropic API key</span>
+          <span class="key-status" id="status-anthropic">not set</span>
+        </div>
+        <a class="key-link" href="settings.html" target="_blank">⚙ Add keys in Settings</a>
+      </div>
+
+      <button class="btn-start-listen" id="btn-start-listen">🎙 START LISTENING</button>
+      <div id="setup-error" class="setup-error"></div>
+    </div>
+  </div>
+
+  <!-- LISTENING SCREEN: during meeting -->
+  <div id="screen-listen" class="screen">
+
+    <div class="listen-header">
+      <div class="listen-status">
+        <div class="pulse-dot"></div>
+        <span id="listen-status-text">LISTENING</span>
+      </div>
+      <div id="listen-timer" class="listen-timer">00:00</div>
+      <div class="listen-meta">
+        <div id="listen-meeting-name" class="listen-meeting-name"></div>
+        <div id="listen-source" class="listen-source">tab audio</div>
+      </div>
+    </div>
+
+    <div class="listen-body">
+
+      <!-- Pet stage -->
+      <div class="pet-stage">
+        <canvas id="listen-pet-canvas" width="80" height="80"></canvas>
+        <div id="listen-pet-name" class="listen-pet-name"></div>
+        <div id="listen-treat-tease" class="treat-tease">🐾 listening...</div>
+      </div>
+
+      <!-- Live transcript feed -->
+      <div class="transcript-feed-wrap">
+        <div class="feed-label">LIVE TRANSCRIPT</div>
+        <div id="transcript-feed" class="transcript-feed">
+          <div class="feed-placeholder">Waiting for speech...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="stat-words">0</div>
+        <div class="stat-label">WORDS</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-speakers">0</div>
+        <div class="stat-label">SPEAKERS</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-chunks">0</div>
+        <div class="stat-label">ANALYZED</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-treats">0</div>
+        <div class="stat-label">TREATS 🔒</div>
+      </div>
+    </div>
+
+    <button class="btn-end-listen" id="btn-end-listen">✦ END MEETING &amp; REVEAL TREATS</button>
+
+  </div>
+
+  <script src="firebase-config.js"></script>
+  <script src="pets.js"></script>
+  <script src="treats.js"></script>
+  <script src="db.js"></script>
+  <script src="listen.js"></script>
+</body>
+</html>

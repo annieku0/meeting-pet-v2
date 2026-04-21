@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Pet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="popup.css?v=12" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="screen-login" class="screen active">
+    <div class="login-hero">
+      <div class="login-paw">🐾</div>
+      <div class="login-title">MEETING PET</div>
+      <div class="login-sub">collaborative companion</div>
+    </div>
+    <div class="login-body">
+      <label class="pixel-label">Your Name</label>
+      <input class="pixel-input" id="login-name-input" type="text" maxlength="20"
+             placeholder="e.g. Alex" autocomplete="off" />
+      <label class="pixel-label" style="margin-top:12px">Password</label>
+      <input class="pixel-input" id="login-pass-input" type="password" maxlength="40"
+             placeholder="Your password" autocomplete="current-password" />
+      <div id="login-account-hint" class="login-account-hint"></div>
+      <div id="login-error" class="login-error"></div>
+    </div>
+    <button class="btn-primary" id="btn-login">▸ LET'S GO</button>
+    <div class="login-info">
+      <div class="info-row">🍎 Earn treats when your team communicates well</div>
+      <div class="info-row">🤝 Feed your pet together at the end</div>
+      <div class="info-row">🔒 Treats revealed only at meeting end</div>
+    </div>
+  </div>
+
+  <!-- HOME SCREEN (dashboard) -->
+  <div id="screen-home" class="screen">
+    <div class="header">
+      <div class="logo-area">
+        <div class="paw-icon">🐾</div>
+        <div class="title-block">
+          <div class="app-title">MEETING PET</div>
+          <div id="home-username" class="app-sub">Hello!</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-settings" title="Settings">⚙</button>
+        <button class="icon-btn" id="btn-logout" title="Log out">⏻</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="home-scroll">
+      <!-- Current pets -->
+      <div class="dash-section-header">
+        <div class="dash-section-title">CURRENT PETS</div>
+      </div>
+      <div id="current-pets-list" class="pets-list"></div>
+
+      <!-- Past pets -->
+      <div class="dash-section-header past-header">
+        <div class="dash-section-title dim">PAST PETS</div>
+      </div>
+      <div id="past-pets-list" class="pets-list past"></div>
+
+      <div id="no-pets-msg" class="no-pets-msg">
+        <div class="no-pets-icon">🥚</div>
+        <div>No pets yet.</div>
+        <div class="no-pets-sub">Start a new pet or join a team's pet below.</div>
+      </div>
+    </div>
+
+    <div class="home-actions">
+      <button class="btn-primary" id="btn-start-new-pet">▸ START NEW PET</button>
+      <button class="btn-secondary" id="btn-join-pet">▸ JOIN A PET</button>
+    </div>
+  </div>
+
+  <!-- JOIN SCREEN -->
+  <div id="screen-join" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" data-target="home">← BACK</button>
+      <div class="screen-title">JOIN A PET</div>
+    </div>
+    <div class="join-body">
+      <div class="join-hint">Enter the invite code your teammate shared</div>
+      <label class="pixel-label">Invite Code</label>
+      <input class="pixel-input code-input" id="join-code-input" type="text"
+             maxlength="8" placeholder="e.g. AB12CD" autocomplete="off" />
+      <div id="join-status" class="join-status"></div>
+    </div>
+    <button class="btn-primary" id="btn-do-join">▸ JOIN</button>
+  </div>
+
+  <!-- QUICK START SCREEN (meeting with existing pet) -->
+  <div id="screen-quick-start" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" data-target="home">← BACK</button>
+      <div class="screen-title">START MEETING</div>
+    </div>
+    <div id="qs-pet-preview" class="preview-wrap"></div>
+    <div id="qs-pet-name-badge" class="qs-pet-name"></div>
+    <div class="name-form">
+      <label class="pixel-label">Meeting Title (optional)</label>
+      <input class="pixel-input" id="qs-meeting-title-input" type="text"
+             maxlength="32" placeholder="e.g. Sprint Planning" />
+    </div>
+    <button class="btn-primary" id="btn-qs-start">▸ START MEETING</button>
+  </div>
+
+  <!-- PET SELECTION SCREEN -->
+  <div id="screen-select" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" data-target="home">← BACK</button>
+      <div class="screen-title">CHOOSE YOUR PET</div>
+    </div>
+    <div class="select-hint">Pick a companion for today's meeting</div>
+    <div id="pet-grid" class="pet-grid"></div>
+    <div id="selected-pet-name" class="selected-name"></div>
+    <button class="btn-primary" id="btn-name-pet" disabled>▸ NAME &amp; START</button>
+  </div>
+
+  <!-- NAME PET SCREEN -->
+  <div id="screen-name" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" data-target="select">← BACK</button>
+      <div class="screen-title">NAME YOUR PET</div>
+    </div>
+    <div id="preview-pet-canvas-wrap" class="preview-wrap"></div>
+    <div class="name-form">
+      <label class="pixel-label">Pet Name (optional)</label>
+      <input class="pixel-input" id="pet-name-input" type="text" maxlength="16" placeholder="e.g. Biscuit" />
+      <label class="pixel-label" style="margin-top:12px">Meeting Title (optional)</label>
+      <input class="pixel-input" id="meeting-title-input" type="text" maxlength="32" placeholder="e.g. Q3 Planning" />
+    </div>
+    <button class="btn-primary" id="btn-start-meeting">▸ START MEETING</button>
+  </div>
+
+  <!-- ACTIVE MEETING SCREEN -->
+  <div id="screen-meeting" class="screen">
+    <div class="meeting-header">
+      <div class="meeting-info">
+        <div class="meeting-label">IN MEETING</div>
+        <div id="meeting-title-display" class="meeting-title-text"></div>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-label">TIME</div>
+        <div id="meeting-timer" class="meeting-timer">00:00</div>
+      </div>
+    </div>
+
+    <div class="invite-bar">
+      <span class="invite-bar-label">INVITE</span>
+      <span id="meeting-invite-code" class="invite-bar-code">——</span>
+      <button class="btn-copy-invite-bar" id="btn-copy-meeting-invite">COPY</button>
+    </div>
+
+    <div class="pet-stage">
+      <canvas id="active-pet-canvas" width="80" height="80"></canvas>
+      <div id="active-pet-name-display" class="pet-name-badge"></div>
+    </div>
+
+    <div class="transcript-section">
+      <div class="section-label">ANALYZE TRANSCRIPT CHUNK</div>
+      <div class="section-hint">Paste recent meeting text. Your pet will listen — treats are revealed at the end.</div>
+      <textarea id="transcript-input" class="pixel-textarea" placeholder="Paste meeting notes or transcript here...&#10;&#10;e.g. 'Can you clarify what you mean by soft launch?'&#10;     'When is the deadline for the marketing assets?'"></textarea>
+      <div id="analysis-status" class="analysis-status"></div>
+      <button class="btn-analyze" id="btn-analyze" onclick="analyzeTranscript()">🐾 SUBMIT TO PET</button>
+    </div>
+  </div>
+
+  <!-- WAITING SCREEN (for non-host members) -->
+  <div id="screen-waiting" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" data-target="home">← BACK</button>
+      <div class="screen-title">WAITING ROOM</div>
+    </div>
+    <div id="waiting-pet-preview" class="preview-wrap"></div>
+    <div id="waiting-pet-name" class="qs-pet-name"></div>
+    <div class="waiting-body">
+      <div class="waiting-status-icon">⏳</div>
+      <div class="waiting-msg">Your host is running the meeting.</div>
+      <div class="waiting-sub">You'll be taken to the feeding room when the meeting ends.</div>
+    </div>
+    <button class="btn-primary" id="btn-check-feeding">🐾 CHECK FEEDING ROOM</button>
+    <div id="waiting-check-result" class="waiting-check-result"></div>
+  </div>
+
+  <script src="pets.js?v=12"></script>
+  <script src="popup.js?v=12"></script>
+</body>
+</html>

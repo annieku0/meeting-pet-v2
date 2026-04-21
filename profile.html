@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Pet — Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="screen-login" class="screen active">
+    <div class="login-wrap">
+      <div class="login-logo">🐾</div>
+      <div class="login-title">MEETING PET</div>
+      <div class="login-sub">Sign in to track your pets across projects</div>
+      <div class="login-form">
+        <label class="px-label">YOUR NAME</label>
+        <input class="px-input" id="login-name" type="text" maxlength="24" placeholder="e.g. Alex" />
+        <button class="btn-login" id="btn-login">▸ ENTER</button>
+        <div id="login-error" class="login-error"></div>
+      </div>
+      <div class="login-note">Demo mode — no password needed for prototype</div>
+    </div>
+  </div>
+
+  <!-- MAIN PROFILE SCREEN -->
+  <div id="screen-profile" class="screen">
+
+    <!-- Header -->
+    <div class="profile-header">
+      <div class="header-left">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <div id="user-name-display" class="user-name">Loading...</div>
+          <div class="user-sub">Meeting Pet Profile</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="btn-signout" title="Sign out">⎋</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="active">ACTIVE PETS</button>
+      <button class="tab" data-tab="past">PAST PETS</button>
+      <button class="tab" data-tab="join">JOIN / NEW</button>
+    </div>
+
+    <!-- Tab: Active pets (ongoing projects) -->
+    <div id="tab-active" class="tab-content active">
+      <div class="section-hint">Your pets from ongoing projects — keep showing up!</div>
+      <div id="active-pets-list" class="pets-list">
+        <div class="empty-state">No active projects yet. Start one below!</div>
+      </div>
+    </div>
+
+    <!-- Tab: Past pets (completed projects) -->
+    <div id="tab-past" class="tab-content">
+      <div class="section-hint">Projects that have concluded — retired companions.</div>
+      <div id="past-pets-list" class="pets-list">
+        <div class="empty-state">No completed projects yet.</div>
+      </div>
+    </div>
+
+    <!-- Tab: Join / New -->
+    <div id="tab-join" class="tab-content">
+
+      <!-- Start new project -->
+      <div class="form-card">
+        <div class="form-card-title">✦ START A NEW PROJECT</div>
+        <div class="form-group">
+          <label class="px-label">PROJECT NAME</label>
+          <input class="px-input" id="new-project-name" type="text" maxlength="32" placeholder="e.g. Q3 Design Sprint" />
+        </div>
+        <div class="form-group">
+          <label class="px-label">CHOOSE YOUR PET</label>
+          <div id="new-pet-grid" class="mini-pet-grid"></div>
+          <div id="new-pet-name-sel" class="mini-sel-name"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex1">
+            <label class="px-label">PET NAME</label>
+            <input class="px-input" id="new-pet-name" type="text" maxlength="16" placeholder="e.g. Biscuit" />
+          </div>
+          <div class="form-group flex1">
+            <label class="px-label">BACKGROUND</label>
+            <select class="px-select" id="new-bg">
+              <option value="meadow">🌿 Meadow</option>
+              <option value="forest">🌲 Forest</option>
+              <option value="beach">🏖 Beach</option>
+              <option value="office">🏢 Office</option>
+              <option value="library">📚 Library</option>
+              <option value="city">🌃 City Night</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" id="btn-create-project">▸ CREATE PROJECT</button>
+        <div id="create-status" class="form-status"></div>
+      </div>
+
+      <!-- Join existing -->
+      <div class="form-card" style="margin-top:16px">
+        <div class="form-card-title">✦ JOIN SOMEONE'S PROJECT</div>
+        <div class="form-hint">Get an invite code from a colleague to join their pet.</div>
+        <div class="form-group">
+          <label class="px-label">INVITE CODE</label>
+          <input class="px-input" id="join-code" type="text" maxlength="8" placeholder="e.g. XYZABC" style="letter-spacing:4px;text-transform:uppercase" />
+        </div>
+        <button class="btn-secondary" id="btn-join-project">▸ JOIN PROJECT</button>
+        <div id="join-status" class="form-status"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="firebase-config.js"></script>
+  <script src="pets.js"></script>
+  <script src="treats.js"></script>
+  <script src="db.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>
