@@ -99,6 +99,7 @@ function bindNavigation() {
   // Back buttons
   document.querySelectorAll('.back-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      stopClarityPolling();
       const target = btn.dataset.target;
       showScreen(target);
       if (target === 'home') {
@@ -178,6 +179,27 @@ function bindNavigation() {
 
   // Quick-start (existing pet flow)
   document.getElementById('btn-qs-start').addEventListener('click', startQuickMeeting);
+
+  // Understanding buttons — meeting screen (host)
+  document.getElementById('btn-got-it').addEventListener('click', () => {
+    recordClarity('understood');
+    flashFeedback(document.getElementById('btn-got-it'), '✓ recorded');
+  });
+  document.getElementById('btn-needs-more').addEventListener('click', () => {
+    recordClarity('needsMore');
+    flashFeedback(document.getElementById('btn-needs-more'), '🤔 recorded');
+  });
+  document.getElementById('btn-clarity-reset').addEventListener('click', resetClarity);
+
+  // Understanding buttons — waiting screen (members)
+  document.getElementById('btn-got-it-waiting').addEventListener('click', () => {
+    recordClarity('understood');
+    flashFeedback(document.getElementById('btn-got-it-waiting'), '✓ recorded');
+  });
+  document.getElementById('btn-needs-more-waiting').addEventListener('click', () => {
+    recordClarity('needsMore');
+    flashFeedback(document.getElementById('btn-needs-more-waiting'), '🤔 recorded');
+  });
 
   // Copy invite code from meeting screen
   document.getElementById('btn-copy-meeting-invite').addEventListener('click', () => {
@@ -387,6 +409,7 @@ function openWaitingRoom(project) {
   document.getElementById('waiting-check-result').textContent = '';
 
   showScreen('waiting');
+  startClarityPolling();
 }
 
 function checkFeedingRoom() {
@@ -562,6 +585,7 @@ function restoreMeetingScreen(session) {
 
   startTimer();
   startPetAnimation(session.petIndex);
+  startClarityPolling();
 }
 
 // ── Timer ─────────────────────────────────────────────────────────────────────
@@ -589,6 +613,69 @@ function startPetAnimation(petIndex) {
     animFrameId = requestAnimationFrame(loop);
   }
   loop();
+}
+
+// ── Understanding / clarity checks ───────────────────────────────────────────
+let _clarityPollId = null;
+
+function getClarityKey() {
+  return currentProjectId ? `mp_clarity_${currentProjectId}` : null;
+}
+
+function getClarityData() {
+  const key = getClarityKey();
+  if (!key) return { understood: 0, needsMore: 0 };
+  try { return JSON.parse(localStorage.getItem(key) || '{"understood":0,"needsMore":0}'); }
+  catch { return { understood: 0, needsMore: 0 }; }
+}
+
+function recordClarity(type) {
+  const key = getClarityKey();
+  if (!key) return;
+  const data = getClarityData();
+  data[type] = (data[type] || 0) + 1;
+  localStorage.setItem(key, JSON.stringify(data));
+  renderClarityTally(data);
+}
+
+function resetClarity() {
+  const key = getClarityKey();
+  if (!key) return;
+  const data = { understood: 0, needsMore: 0 };
+  localStorage.setItem(key, JSON.stringify(data));
+  renderClarityTally(data);
+}
+
+function renderClarityTally(data) {
+  // Update both screens if present
+  ['meeting-clarity-tally', 'waiting-clarity-tally'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.querySelector('.tally-got').textContent  = `✓ ${data.understood || 0}`;
+    el.querySelector('.tally-more').textContent = `🤔 ${data.needsMore || 0}`;
+  });
+}
+
+function startClarityPolling() {
+  stopClarityPolling();
+  _clarityPollId = setInterval(() => {
+    renderClarityTally(getClarityData());
+  }, 800);
+  renderClarityTally(getClarityData()); // immediate first render
+}
+
+function stopClarityPolling() {
+  if (_clarityPollId) { clearInterval(_clarityPollId); _clarityPollId = null; }
+}
+
+function flashFeedback(btn, msg) {
+  const orig = btn.textContent;
+  btn.textContent = msg;
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }, 1200);
 }
 
 // ── Analyze transcript ────────────────────────────────────────────────────────

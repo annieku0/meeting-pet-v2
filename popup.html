@@ -6,7 +6,7 @@
   <title>Meeting Pet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="popup.css?v=12" />
+  <link rel="stylesheet" href="popup.css?v=14" />
 </head>
 <body>
 
@@ -163,6 +163,21 @@
       <div id="active-pet-name-display" class="pet-name-badge"></div>
     </div>
 
+    <!-- Understanding check panel -->
+    <div class="clarity-panel">
+      <div class="clarity-tally" id="meeting-clarity-tally">
+        <span class="tally-got">✓ 0</span>
+        <span class="tally-sep">·</span>
+        <span class="tally-more">🤔 0</span>
+        <button class="btn-clarity-reset" id="btn-clarity-reset" title="Reset counts">↺</button>
+      </div>
+      <div class="clarity-buttons">
+        <button class="btn-clarity btn-got-it" id="btn-got-it">✓ Everyone understood?</button>
+        <button class="btn-clarity btn-needs-more" id="btn-needs-more">🤔 Explain again</button>
+      </div>
+      <div class="clarity-anon-note">anonymous · no one knows who pressed</div>
+    </div>
+
     <div class="transcript-section">
       <div class="section-label">ANALYZE TRANSCRIPT CHUNK</div>
       <div class="section-hint">Paste recent meeting text. Your pet will listen — treats are revealed at the end.</div>
@@ -180,16 +195,30 @@
     </div>
     <div id="waiting-pet-preview" class="preview-wrap"></div>
     <div id="waiting-pet-name" class="qs-pet-name"></div>
-    <div class="waiting-body">
-      <div class="waiting-status-icon">⏳</div>
-      <div class="waiting-msg">Your host is running the meeting.</div>
-      <div class="waiting-sub">You'll be taken to the feeding room when the meeting ends.</div>
+    <!-- Understanding check panel (members) -->
+    <div class="clarity-panel">
+      <div class="clarity-tally" id="waiting-clarity-tally">
+        <span class="tally-got">✓ 0</span>
+        <span class="tally-sep">·</span>
+        <span class="tally-more">🤔 0</span>
+      </div>
+      <div class="clarity-buttons">
+        <button class="btn-clarity btn-got-it" id="btn-got-it-waiting">✓ Everyone understood?</button>
+        <button class="btn-clarity btn-needs-more" id="btn-needs-more-waiting">🤔 Explain again</button>
+      </div>
+      <div class="clarity-anon-note">anonymous · no one knows who pressed</div>
+      <div id="waiting-clarity-feedback" class="clarity-feedback"></div>
     </div>
-    <button class="btn-primary" id="btn-check-feeding">🐾 CHECK FEEDING ROOM</button>
+
+    <div class="waiting-body">
+      <div class="waiting-msg">Meeting in progress.</div>
+      <div class="waiting-sub">Press the buttons above to respond live.<br>Check below when the meeting ends.</div>
+    </div>
+    <button class="btn-secondary" id="btn-check-feeding">🐾 CHECK FEEDING ROOM</button>
     <div id="waiting-check-result" class="waiting-check-result"></div>
   </div>
 
-  <script src="pets.js?v=12"></script>
-  <script src="popup.js?v=12"></script>
+  <script src="pets.js?v=14"></script>
+  <script src="popup.js?v=14"></script>
 </body>
 </html>
