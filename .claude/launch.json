@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "meeting-pet",
+      "name": "synko",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "5050"],
       "port": 5050

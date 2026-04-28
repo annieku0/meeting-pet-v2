@@ -2,7 +2,7 @@
 // Firebase Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Go to https://console.firebase.google.com
-// 2. Create a new project (e.g. "meeting-pet")
+// 2. Create a new project (e.g. "synko")
 // 3. Add a Web app, copy the config object below
 // 4. Enable Authentication → Email/Password + Google
 // 5. Enable Realtime Database (start in test mode for prototype)

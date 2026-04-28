@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meeting Pet</title>
+  <title>Synko</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="popup.css?v=14" />
+  <link rel="stylesheet" href="popup.css?v=21" />
 </head>
 <body>
 
@@ -14,7 +14,7 @@
   <div id="screen-login" class="screen active">
     <div class="login-hero">
       <div class="login-paw">🐾</div>
-      <div class="login-title">MEETING PET</div>
+      <div class="login-title">SYNKO</div>
       <div class="login-sub">collaborative companion</div>
     </div>
     <div class="login-body">
@@ -35,13 +35,30 @@
     </div>
   </div>
 
+  <!-- SLACK PET SELECT SCREEN -->
+  <div id="screen-slack-pet" class="screen">
+    <div class="screen-header">
+      <button class="back-btn" data-target="login">← BACK</button>
+      <div class="screen-title">CHOOSE COMPANION</div>
+    </div>
+    <div class="select-hint">Pick a pet to assist you in Slack</div>
+    <div id="slack-pet-grid" class="pet-grid"></div>
+    <div id="slack-selected-pet-name" class="selected-name"></div>
+    <div class="name-form" id="slack-name-form" style="display:none">
+      <label class="pixel-label">Name your pet</label>
+      <input class="pixel-input" id="slack-pet-name-input" type="text"
+             maxlength="16" placeholder="e.g. Biscuit" autocomplete="off" />
+    </div>
+    <button class="btn-primary" id="btn-enter-slack" disabled>💬 ENTER WORKSPACE</button>
+  </div>
+
   <!-- HOME SCREEN (dashboard) -->
   <div id="screen-home" class="screen">
     <div class="header">
       <div class="logo-area">
         <div class="paw-icon">🐾</div>
         <div class="title-block">
-          <div class="app-title">MEETING PET</div>
+          <div class="app-title">SYNKO</div>
           <div id="home-username" class="app-sub">Hello!</div>
         </div>
       </div>
@@ -71,11 +88,13 @@
         <div>No pets yet.</div>
         <div class="no-pets-sub">Start a new pet or join a team's pet below.</div>
       </div>
+
     </div>
 
     <div class="home-actions">
       <button class="btn-primary" id="btn-start-new-pet">▸ START NEW PET</button>
       <button class="btn-secondary" id="btn-join-pet">▸ JOIN A PET</button>
+      <button class="btn-slack-entry" id="btn-go-to-slack">💬 Go to Slack</button>
     </div>
   </div>
 
@@ -165,15 +184,13 @@
 
     <!-- Understanding check panel -->
     <div class="clarity-panel">
-      <div class="clarity-tally" id="meeting-clarity-tally">
-        <span class="tally-got">✓ 0</span>
-        <span class="tally-sep">·</span>
-        <span class="tally-more">🤔 0</span>
-        <button class="btn-clarity-reset" id="btn-clarity-reset" title="Reset counts">↺</button>
-      </div>
       <div class="clarity-buttons">
-        <button class="btn-clarity btn-got-it" id="btn-got-it">✓ Everyone understood?</button>
-        <button class="btn-clarity btn-needs-more" id="btn-needs-more">🤔 Explain again</button>
+        <button class="btn-clarity btn-ask-everyone" id="btn-ask-everyone">📢 Check understanding</button>
+        <button class="btn-clarity btn-needs-more" id="btn-needs-more">🤔 I need clarification</button>
+      </div>
+      <div class="clarity-passive-tally" id="meeting-passive-tally">
+        <span class="tally-more-passive">🤔 <span id="meeting-needs-count">0</span> need clarification</span>
+        <button class="btn-clarity-reset" id="btn-clarity-reset" title="Reset">↺</button>
       </div>
       <div class="clarity-anon-note">anonymous · no one knows who pressed</div>
     </div>
@@ -197,17 +214,14 @@
     <div id="waiting-pet-name" class="qs-pet-name"></div>
     <!-- Understanding check panel (members) -->
     <div class="clarity-panel">
-      <div class="clarity-tally" id="waiting-clarity-tally">
-        <span class="tally-got">✓ 0</span>
-        <span class="tally-sep">·</span>
-        <span class="tally-more">🤔 0</span>
-      </div>
       <div class="clarity-buttons">
-        <button class="btn-clarity btn-got-it" id="btn-got-it-waiting">✓ Everyone understood?</button>
-        <button class="btn-clarity btn-needs-more" id="btn-needs-more-waiting">🤔 Explain again</button>
+        <button class="btn-clarity btn-ask-everyone" id="btn-ask-everyone-waiting">📢 Check understanding</button>
+        <button class="btn-clarity btn-needs-more" id="btn-needs-more-waiting">🤔 I need clarification</button>
+      </div>
+      <div class="clarity-passive-tally" id="waiting-passive-tally">
+        <span class="tally-more-passive">🤔 <span id="waiting-needs-count">0</span> need clarification</span>
       </div>
       <div class="clarity-anon-note">anonymous · no one knows who pressed</div>
-      <div id="waiting-clarity-feedback" class="clarity-feedback"></div>
     </div>
 
     <div class="waiting-body">
@@ -218,7 +232,52 @@
     <div id="waiting-check-result" class="waiting-check-result"></div>
   </div>
 
-  <script src="pets.js?v=14"></script>
-  <script src="popup.js?v=14"></script>
+  <!-- Clarification overlay — global, shown over any screen -->
+  <div id="clarification-overlay" class="poll-overlay hidden">
+    <div class="poll-modal clarification-modal">
+      <div class="poll-header clarification-header">HEADS UP</div>
+      <div class="clarification-icon">🤔</div>
+      <div class="poll-question">Someone needs clarification.<br>Consider pausing to re-explain.</div>
+      <div class="clarity-running-tally" id="overlay-needs-count-wrap">
+        <span id="overlay-needs-count">1</span> person flagged this
+      </div>
+      <button class="btn-poll-dismiss" id="btn-toast-dismiss">GOT IT</button>
+      <div class="poll-anon-note">anonymous · no one knows who pressed</div>
+    </div>
+  </div>
+
+  <!-- Poll overlay — global, shown over any screen -->
+  <div id="poll-overlay" class="poll-overlay hidden">
+    <div class="poll-modal">
+      <div class="poll-header" id="poll-header-label">CHECK-IN</div>
+      <div class="poll-question" id="poll-question-text">Does everyone understand what was just discussed?</div>
+
+      <!-- Vote buttons (round 1 & 2) -->
+      <div id="poll-vote-area" class="poll-vote-area">
+        <button class="btn-poll btn-poll-yes" id="btn-poll-yes">✓ Yes, I'm good</button>
+        <button class="btn-poll btn-poll-no" id="btn-poll-no">✗ Need to backtrack</button>
+      </div>
+      <div id="poll-voted-msg" class="poll-voted-msg hidden">Vote recorded.</div>
+
+      <!-- Live tally -->
+      <div class="poll-live-tally">
+        <span id="poll-tally-yes" class="poll-tally-yes">✓ 0</span>
+        <span class="poll-tally-sep">·</span>
+        <span id="poll-tally-no" class="poll-tally-no">✗ 0</span>
+      </div>
+
+      <!-- Status message -->
+      <div id="poll-result-msg" class="poll-result-msg hidden"></div>
+
+      <!-- Check-again button (appears after backtrack) -->
+      <button class="btn-poll-checkagain hidden" id="btn-poll-checkagain">↺ Re-explained — check again</button>
+
+      <button class="btn-poll-dismiss" id="btn-poll-dismiss">DISMISS</button>
+      <div class="poll-anon-note">anonymous · your response is never shown with your name</div>
+    </div>
+  </div>
+
+  <script src="pets.js?v=18"></script>
+  <script src="popup.js?v=21"></script>
 </body>
 </html>

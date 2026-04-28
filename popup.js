@@ -33,6 +33,7 @@ function openTab(url) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let selectedPetIndex = null;
+let slackSelectedPetIndex = null;
 let animFrameId = null;
 let timerInterval = null;
 let meetingStartTime = null;
@@ -124,6 +125,22 @@ function bindNavigation() {
     showScreen('login');
   });
 
+  // Go to Slack
+  document.getElementById('btn-go-to-slack').addEventListener('click', () => {
+    buildSlackPetGrid();
+    document.getElementById('slack-selected-pet-name').textContent = '';
+    document.getElementById('slack-name-form').style.display = 'none';
+    document.getElementById('slack-pet-name-input').value = '';
+    document.getElementById('btn-enter-slack').disabled = true;
+    showScreen('slack-pet');
+  });
+  document.getElementById('btn-enter-slack').addEventListener('click', () => {
+    if (slackSelectedPetIndex === null) return;
+    const typed    = document.getElementById('slack-pet-name-input').value.trim();
+    const petName  = typed || PET_SPRITES[slackSelectedPetIndex].name;
+    window.location.href = `slack.html?petIndex=${slackSelectedPetIndex}&petName=${encodeURIComponent(petName)}`;
+  });
+
   // Login
   document.getElementById('btn-login').addEventListener('click', handleLogin);
   document.getElementById('login-pass-input').addEventListener('keydown', e => {
@@ -180,26 +197,30 @@ function bindNavigation() {
   // Quick-start (existing pet flow)
   document.getElementById('btn-qs-start').addEventListener('click', startQuickMeeting);
 
-  // Understanding buttons — meeting screen (host)
-  document.getElementById('btn-got-it').addEventListener('click', () => {
-    recordClarity('understood');
-    flashFeedback(document.getElementById('btn-got-it'), '✓ recorded');
-  });
-  document.getElementById('btn-needs-more').addEventListener('click', () => {
-    recordClarity('needsMore');
-    flashFeedback(document.getElementById('btn-needs-more'), '🤔 recorded');
-  });
-  document.getElementById('btn-clarity-reset').addEventListener('click', resetClarity);
+  // Check understanding — triggers group poll
+  document.getElementById('btn-ask-everyone').addEventListener('click', () => startPoll());
+  document.getElementById('btn-ask-everyone-waiting').addEventListener('click', () => startPoll());
 
-  // Understanding buttons — waiting screen (members)
-  document.getElementById('btn-got-it-waiting').addEventListener('click', () => {
-    recordClarity('understood');
-    flashFeedback(document.getElementById('btn-got-it-waiting'), '✓ recorded');
+  // "I need clarification" buttons — broadcast to everyone
+  document.getElementById('btn-needs-more').addEventListener('click', () => {
+    broadcastNeedsMore();
+    flashFeedback(document.getElementById('btn-needs-more'), '🤔 sent');
   });
   document.getElementById('btn-needs-more-waiting').addEventListener('click', () => {
-    recordClarity('needsMore');
-    flashFeedback(document.getElementById('btn-needs-more-waiting'), '🤔 recorded');
+    broadcastNeedsMore();
+    flashFeedback(document.getElementById('btn-needs-more-waiting'), '🤔 sent');
   });
+
+  // Toast dismiss
+  document.getElementById('btn-toast-dismiss').addEventListener('click', dismissToast);
+
+  document.getElementById('btn-clarity-reset').addEventListener('click', resetClarity);
+
+  // Poll overlay buttons
+  document.getElementById('btn-poll-yes').addEventListener('click', () => castVote('yes'));
+  document.getElementById('btn-poll-no').addEventListener('click', () => castVote('no'));
+  document.getElementById('btn-poll-dismiss').addEventListener('click', dismissPoll);
+  document.getElementById('btn-poll-checkagain').addEventListener('click', startFollowupPoll);
 
   // Copy invite code from meeting screen
   document.getElementById('btn-copy-meeting-invite').addEventListener('click', () => {
@@ -489,6 +510,29 @@ async function handleJoin() {
   }, 1200);
 }
 
+// ── Slack pet grid ────────────────────────────────────────────────────────────
+function buildSlackPetGrid() {
+  slackSelectedPetIndex = null;
+  const grid = document.getElementById('slack-pet-grid');
+  grid.innerHTML = '';
+  PET_SPRITES.forEach((pet, index) => {
+    const cell = document.createElement('div');
+    cell.className = 'pet-cell';
+    cell.title = pet.name;
+    cell.appendChild(createPetCanvas(index, 3));
+    cell.addEventListener('click', () => {
+      grid.querySelectorAll('.pet-cell').forEach(c => c.classList.remove('selected'));
+      cell.classList.add('selected');
+      slackSelectedPetIndex = index;
+      document.getElementById('slack-selected-pet-name').textContent = pet.name.toUpperCase();
+      document.getElementById('slack-name-form').style.display = 'block';
+      document.getElementById('slack-pet-name-input').placeholder = `e.g. ${pet.name}`;
+      document.getElementById('btn-enter-slack').disabled = false;
+    });
+    grid.appendChild(cell);
+  });
+}
+
 // ── Pet grid ──────────────────────────────────────────────────────────────────
 function buildPetGrid() {
   const grid = document.getElementById('pet-grid');
@@ -615,57 +659,297 @@ function startPetAnimation(petIndex) {
   loop();
 }
 
-// ── Understanding / clarity checks ───────────────────────────────────────────
-let _clarityPollId = null;
-
-function getClarityKey() {
-  return currentProjectId ? `mp_clarity_${currentProjectId}` : null;
+// ── "Needs clarification" broadcast ──────────────────────────────────────────
+function getPassiveKey() {
+  return currentProjectId ? `mp_passive_${currentProjectId}` : null;
 }
 
-function getClarityData() {
-  const key = getClarityKey();
-  if (!key) return { understood: 0, needsMore: 0 };
-  try { return JSON.parse(localStorage.getItem(key) || '{"understood":0,"needsMore":0}'); }
-  catch { return { understood: 0, needsMore: 0 }; }
+function getPassiveData() {
+  const key = getPassiveKey();
+  if (!key) return { needsMore: 0, lastSignalAt: 0 };
+  try { return JSON.parse(localStorage.getItem(key) || '{"needsMore":0,"lastSignalAt":0}'); }
+  catch { return { needsMore: 0, lastSignalAt: 0 }; }
 }
 
-function recordClarity(type) {
-  const key = getClarityKey();
+let _lastSeenSignalAt = 0; // tracks which signal this client has already shown a toast for
+
+function broadcastNeedsMore() {
+  const key = getPassiveKey();
   if (!key) return;
-  const data = getClarityData();
-  data[type] = (data[type] || 0) + 1;
+  const data = getPassiveData();
+  data.needsMore = (data.needsMore || 0) + 1;
+  data.lastSignalAt = Date.now();
   localStorage.setItem(key, JSON.stringify(data));
-  renderClarityTally(data);
+  // Show toast locally too (the person pressing also sees confirmation)
+  _lastSeenSignalAt = data.lastSignalAt;
+  renderPassiveTally(data);
+  showToast();
 }
 
 function resetClarity() {
-  const key = getClarityKey();
-  if (!key) return;
-  const data = { understood: 0, needsMore: 0 };
-  localStorage.setItem(key, JSON.stringify(data));
-  renderClarityTally(data);
+  const key = getPassiveKey();
+  if (key) localStorage.setItem(key, JSON.stringify({ needsMore: 0, lastSignalAt: 0 }));
+  _lastSeenSignalAt = 0;
+  dismissToast();
+  renderPassiveTally({ needsMore: 0 });
+  // Also reset any active poll
+  const pollKey = getPollKey();
+  if (pollKey) localStorage.removeItem(pollKey);
+  hidePollOverlay();
 }
 
-function renderClarityTally(data) {
-  // Update both screens if present
-  ['meeting-clarity-tally', 'waiting-clarity-tally'].forEach(id => {
+function renderPassiveTally(data) {
+  const count = data.needsMore || 0;
+  ['meeting-needs-count', 'waiting-needs-count'].forEach(id => {
     const el = document.getElementById(id);
-    if (!el) return;
-    el.querySelector('.tally-got').textContent  = `✓ ${data.understood || 0}`;
-    el.querySelector('.tally-more').textContent = `🤔 ${data.needsMore || 0}`;
+    if (el) el.textContent = count;
   });
+}
+
+// ── Group poll (real-time check-in) ──────────────────────────────────────────
+let _mainPollId  = null;   // setInterval handle for polling localStorage
+let _pollVotedId = null;   // ID of the poll this user already voted on
+let _pollDismissedId = null; // ID of poll this user dismissed
+
+function getPollKey() {
+  return currentProjectId ? `mp_poll_${currentProjectId}` : null;
+}
+
+function getPollData() {
+  const key = getPollKey();
+  if (!key) return null;
+  try { return JSON.parse(localStorage.getItem(key) || 'null'); }
+  catch { return null; }
+}
+
+// Poll history helpers
+function getPollHistoryKey() {
+  return currentProjectId ? `mp_poll_history_${currentProjectId}` : null;
+}
+function savePollToHistory(poll) {
+  const key = getPollHistoryKey();
+  if (!key) return;
+  try {
+    const history = JSON.parse(localStorage.getItem(key) || '[]');
+    history.push({
+      id:         poll.id,
+      round:      poll.round,
+      yes:        poll.yes || 0,
+      no:         poll.no  || 0,
+      status:     poll.status,
+      savedAt:    Date.now(),
+    });
+    localStorage.setItem(key, JSON.stringify(history));
+  } catch {}
+}
+
+function startPoll() {
+  const key = getPollKey();
+  if (!key) return;
+  const poll = {
+    id: Date.now().toString(),
+    round: 1,
+    status: 'active',
+    yes: 0,
+    no: 0,
+    hasNo: false,
+    startedAt: Date.now(),
+  };
+  localStorage.setItem(key, JSON.stringify(poll));
+  _pollVotedId     = null;
+  _pollDismissedId = null;
+  showPollOverlay(poll);
+}
+
+function startFollowupPoll() {
+  const key = getPollKey();
+  if (!key) return;
+  const prev = getPollData();
+  // Save the backtrack round to history before resetting
+  if (prev) savePollToHistory(prev);
+
+  const poll = {
+    id: Date.now().toString(),
+    round: 2,
+    status: 'active',
+    yes: 0,
+    no: 0,
+    hasNo: false,
+    startedAt: Date.now(),
+  };
+  localStorage.setItem(key, JSON.stringify(poll));
+  _pollVotedId     = null;
+  _pollDismissedId = null;
+  showPollOverlay(poll);
+}
+
+function castVote(type) {
+  const key = getPollKey();
+  if (!key) return;
+  const poll = getPollData();
+  if (!poll || poll.status !== 'active') return;
+
+  poll[type] = (poll[type] || 0) + 1;
+  if (type === 'no') poll.hasNo = true;
+
+  // If this is round 2 and no one has said no yet and someone just said yes,
+  // check if resolved (all voted yes so far — mark tentatively)
+  if (type === 'no' && poll.round === 2) {
+    poll.status = 'unresolved';
+    savePollToHistory(poll);
+  }
+
+  localStorage.setItem(key, JSON.stringify(poll));
+  _pollVotedId = poll.id;
+
+  document.getElementById('poll-vote-area').classList.add('hidden');
+  document.getElementById('poll-voted-msg').classList.remove('hidden');
+
+  renderPollOverlay(poll);
+}
+
+function dismissPoll() {
+  const poll = getPollData();
+  // Save round 2 resolved outcome when dismissed with no No votes
+  if (poll && poll.round === 2 && !poll.hasNo && poll.yes > 0) {
+    poll.status = 'resolved';
+    savePollToHistory(poll);
+    const key = getPollKey();
+    if (key) localStorage.setItem(key, JSON.stringify(poll));
+  }
+  _pollDismissedId = poll?.id || null;
+  hidePollOverlay();
+}
+
+function showPollOverlay(poll) {
+  document.getElementById('poll-overlay').classList.remove('hidden');
+  // Reset vote UI state
+  document.getElementById('poll-vote-area').classList.remove('hidden');
+  document.getElementById('poll-voted-msg').classList.add('hidden');
+  document.getElementById('poll-result-msg').classList.add('hidden');
+  document.getElementById('btn-poll-checkagain').classList.add('hidden');
+  renderPollOverlay(poll);
+}
+
+function hidePollOverlay() {
+  document.getElementById('poll-overlay').classList.add('hidden');
+}
+
+function renderPollOverlay(poll) {
+  if (!poll) return;
+
+  // Header + question change for round 2
+  const isFollowup = poll.round === 2;
+  document.getElementById('poll-header-label').textContent =
+    isFollowup ? 'DID THAT HELP?' : 'CHECK-IN';
+  document.getElementById('poll-question-text').textContent =
+    isFollowup
+      ? 'After re-explaining — is everyone clearer now?'
+      : 'Does everyone understand what was just discussed?';
+  document.getElementById('btn-poll-yes').textContent = isFollowup ? '✓ Yes, clearer now' : '✓ Yes, I\'m good';
+  document.getElementById('btn-poll-no').textContent  = isFollowup ? '✗ Still confused'   : '✗ Need to backtrack';
+
+  document.getElementById('poll-tally-yes').textContent = `✓ ${poll.yes || 0}`;
+  document.getElementById('poll-tally-no').textContent  = `✗ ${poll.no  || 0}`;
+
+  const resultEl    = document.getElementById('poll-result-msg');
+  const checkAgain  = document.getElementById('btn-poll-checkagain');
+
+  if (poll.status === 'unresolved') {
+    resultEl.textContent = '⚠️ Still some confusion. Consider addressing further.';
+    resultEl.className = 'poll-result-msg backtrack';
+    checkAgain.classList.add('hidden');
+  } else if (poll.status === 'resolved') {
+    resultEl.textContent = '✓ Issue resolved! Re-explaining helped.';
+    resultEl.className = 'poll-result-msg all-good';
+    checkAgain.classList.add('hidden');
+  } else if (poll.hasNo && !isFollowup) {
+    // Round 1 backtrack
+    resultEl.textContent = '⚠️ Someone needs to backtrack. Pause and re-explain.';
+    resultEl.className = 'poll-result-msg backtrack';
+    checkAgain.classList.remove('hidden');
+  } else if (poll.hasNo && isFollowup) {
+    resultEl.textContent = '⚠️ Still some confusion. Consider addressing further.';
+    resultEl.className = 'poll-result-msg backtrack';
+    checkAgain.classList.add('hidden');
+  } else if ((poll.yes || 0) > 0) {
+    resultEl.textContent = isFollowup
+      ? `✓ ${poll.yes} said clearer — waiting for others.`
+      : `✓ ${poll.yes} responded — no issues flagged yet.`;
+    resultEl.className = 'poll-result-msg all-good';
+    checkAgain.classList.add('hidden');
+  } else {
+    resultEl.className = 'poll-result-msg hidden';
+    checkAgain.classList.add('hidden');
+  }
+}
+
+// ── Clarification overlay ─────────────────────────────────────────────────────
+function showToast() {
+  const data = getPassiveData();
+  const countEl = document.getElementById('overlay-needs-count');
+  if (countEl) countEl.textContent = data.needsMore || 1;
+  document.getElementById('clarification-overlay').classList.remove('hidden');
+}
+
+function dismissToast() {
+  document.getElementById('clarification-overlay').classList.add('hidden');
+}
+
+function checkPollState() {
+  // Check for new "needs clarification" signal from anyone
+  const passive = getPassiveData();
+  renderPassiveTally(passive);
+  if (passive.lastSignalAt && passive.lastSignalAt > _lastSeenSignalAt) {
+    _lastSeenSignalAt = passive.lastSignalAt;
+    showToast();
+  }
+  // Keep count fresh if overlay is already open
+  const overlay = document.getElementById('clarification-overlay');
+  if (!overlay.classList.contains('hidden')) {
+    const countEl = document.getElementById('overlay-needs-count');
+    if (countEl) countEl.textContent = passive.needsMore || 1;
+  }
+
+  const poll = getPollData();
+  const pollIsLive = poll && (poll.status === 'active' || poll.status === 'unresolved' || poll.status === 'resolved');
+  if (!pollIsLive) {
+    if (!document.getElementById('poll-overlay').classList.contains('hidden')) {
+      hidePollOverlay();
+    }
+    return;
+  }
+
+  // Already dismissed this poll — don't re-show
+  if (_pollDismissedId === poll.id) {
+    renderPollOverlay(poll); // still update tally in background
+    return;
+  }
+
+  // Show overlay if not visible
+  if (document.getElementById('poll-overlay').classList.contains('hidden')) {
+    // Restore vote button state based on whether user already voted
+    if (_pollVotedId === poll.id) {
+      document.getElementById('poll-vote-area').classList.add('hidden');
+      document.getElementById('poll-voted-msg').classList.remove('hidden');
+    } else {
+      document.getElementById('poll-vote-area').classList.remove('hidden');
+      document.getElementById('poll-voted-msg').classList.add('hidden');
+    }
+    document.getElementById('poll-overlay').classList.remove('hidden');
+  }
+
+  renderPollOverlay(poll);
 }
 
 function startClarityPolling() {
   stopClarityPolling();
-  _clarityPollId = setInterval(() => {
-    renderClarityTally(getClarityData());
-  }, 800);
-  renderClarityTally(getClarityData()); // immediate first render
+  checkPollState(); // immediate
+  _mainPollId = setInterval(checkPollState, 800);
 }
 
 function stopClarityPolling() {
-  if (_clarityPollId) { clearInterval(_clarityPollId); _clarityPollId = null; }
+  if (_mainPollId) { clearInterval(_mainPollId); _mainPollId = null; }
 }
 
 function flashFeedback(btn, msg) {

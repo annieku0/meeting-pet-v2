@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Meeting Pet — Live Listener
+// Synko — Live Listener
 // Pipeline: getDisplayMedia (tab audio) → Deepgram WebSocket → transcript
 //           → buffer chunks → Claude analysis → treats
 // ─────────────────────────────────────────────────────────────────────────────

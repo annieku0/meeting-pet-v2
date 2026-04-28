@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Meeting Pet",
+  "name": "Synko",
   "version": "1.0.0",
   "description": "A collaborative meeting companion that rewards great cross-team communication",
   "permissions": ["storage", "tabs"],

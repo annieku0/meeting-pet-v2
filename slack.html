@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synko — Slack Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="slack.css?v=4" />
+</head>
+<body>
+
+<div class="slack-workspace">
+
+  <!-- ── Sidebar ── -->
+  <aside class="slack-sidebar">
+    <div class="workspace-header">
+      <div class="workspace-name">PIXEL TEAM</div>
+      <div class="workspace-status">
+        <div class="status-dot"></div>
+        <span>Active workspace</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">CHANNELS</div>
+      <div class="channel-item active" data-channel="general">
+        <span class="ch-hash">#</span> general
+      </div>
+      <div class="channel-item" data-channel="marketing">
+        <span class="ch-hash">#</span> marketing
+        <span class="unread"></span>
+      </div>
+      <div class="channel-item" data-channel="design">
+        <span class="ch-hash">#</span> design
+      </div>
+      <div class="channel-item" data-channel="dev">
+        <span class="ch-hash">#</span> dev
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">DIRECT MESSAGES</div>
+      <div class="channel-item" data-channel="dm-lesley">
+        <div class="online-dot"></div>
+        Lesley
+      </div>
+      <div class="channel-item" data-channel="dm-steve">
+        <div class="online-dot" style="background:var(--yellow)"></div>
+        Steve
+      </div>
+      <div class="channel-item" data-channel="dm-alex">
+        <div class="online-dot" style="background:var(--dim)"></div>
+        Alex
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main area ── -->
+  <div class="slack-main">
+    <div class="channel-header">
+      <span class="channel-header-name" id="channel-header-name"># general</span>
+      <span class="channel-header-sep">|</span>
+      <span class="channel-header-topic" id="channel-header-topic">Team announcements and general chat</span>
+    </div>
+
+    <div class="messages-area" id="messages-area"></div>
+
+    <div class="message-composer">
+      <div class="composer-inner">
+        <input class="composer-input" id="composer-input"
+               placeholder="Message #general" autocomplete="off" />
+        <button class="btn-send" id="btn-send">SEND</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pet assistant ── -->
+<div class="pet-assistant" id="pet-assistant">
+  <!-- Notification panel (above the pet) -->
+  <div class="pet-notification hidden" id="pet-notification">
+    <div class="notif-header">✦ PET SUGGESTION</div>
+    <div class="notif-type-badge" id="notif-type-badge">VAGUE COMMITMENT</div>
+    <div class="notif-label">ORIGINAL</div>
+    <div class="notif-original" id="notif-original"></div>
+    <div class="notif-label">TRY THIS INSTEAD</div>
+    <div class="notif-suggestion" id="notif-suggestion"></div>
+    <div class="notif-actions">
+      <button class="btn-use-suggestion" id="btn-use-suggestion">USE THIS</button>
+      <button class="btn-dismiss-notif" id="btn-dismiss-notif">DISMISS</button>
+    </div>
+  </div>
+
+  <!-- Pet sprite -->
+  <div class="pet-bubble" id="pet-bubble" title="Your collaboration pet">
+    <canvas id="slack-pet-canvas" width="48" height="48"></canvas>
+    <div class="pet-label" id="pet-label">PET</div>
+  </div>
+</div>
+
+<script src="pets.js?v=18"></script>
+<script src="slack.js?v=8"></script>
+</body>
+</html>

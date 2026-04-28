@@ -718,7 +718,7 @@ async function doneFeedingRoom() {
 function copyInviteCode() {
   const code = project?.inviteCode || '';
   const url  = `${location.origin}${location.pathname}?projectId=${getProjectId()}`;
-  navigator.clipboard.writeText(`Join our Meeting Pet room! Code: ${code}\n${url}`).then(() => {
+  navigator.clipboard.writeText(`Join our Synko room! Code: ${code}\n${url}`).then(() => {
     const btn = document.getElementById('btn-copy-invite');
     btn.textContent = 'COPIED!';
     setTimeout(() => btn.textContent = 'COPY', 2000);
