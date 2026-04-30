@@ -525,6 +525,16 @@ function showNotification(data) {
   notifTypeBadge.textContent  = data.type;
   notifOriginal.textContent   = data.original;
   notifSuggestion.textContent = data.suggestion;
+  const reasonEl = document.getElementById('notif-reason');
+  if (reasonEl) {
+    if (data.reason) {
+      reasonEl.textContent = data.reason;
+      reasonEl.style.display = '';
+    } else {
+      reasonEl.textContent = '';
+      reasonEl.style.display = 'none';
+    }
+  }
   petNotification.classList.remove('hidden');
   petBubble.classList.remove('has-suggestion');
   petBubble.style.transform = 'translateY(-4px)';
@@ -625,11 +635,14 @@ function runCommand(raw) {
 
 function postPetCoachingEphemeral(hit) {
   const petName = initiatedPet?.petName || 'Synko';
+  const reasonHtml = hit.reason
+    ? `<div style="font-size:12px;color:#616061;margin-bottom:6px">${escapeHtml(hit.reason)}</div>`
+    : `<div style="font-size:12px;color:#616061;margin-bottom:6px">Your message read as ${escapeHtml(hit.type.toLowerCase())}.</div>`;
   postMessage(currentChannel, {
     kind: 'synko-ephemeral',
     html: `
       <div style="font-weight:700;margin-bottom:4px">🍎 ${escapeHtml(petName)} noticed: ${escapeHtml(hit.type)}</div>
-      <div style="font-size:12px;color:#616061;margin-bottom:6px">Your message read as ${hit.type.toLowerCase()}.</div>
+      ${reasonHtml}
       <div style="background:#fff;border-left:3px solid #FF8040;padding:8px 10px;border-radius:0 6px 6px 0;font-size:13px;color:#1d1c1d;line-height:1.5">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.4px;font-weight:700;color:#b46808;margin-bottom:3px">Try this instead</div>
         ${escapeHtml(hit.suggestion)}
@@ -935,44 +948,89 @@ Now reply as ${persona}.`;
 //  live-typing pulse signal; this AI pass overrides it on send.
 // ─────────────────────────────────────────────────────────────────────────────
 const COACH_SYSTEM_PROMPT =
-`You are a Slack communication coach for the Synko pet. You read a message
-the user is about to send and decide whether it could be more specific.
+`You are Synko's pet — a thoughtful Slack communication coach. You read a
+draft a teammate is about to send (or is in the middle of writing) and decide
+whether it could be clearer, more specific, or more actionable.
 
-Flag a message ONLY if it lands with one of these problems:
-- VAGUE COMMITMENT  — promises/confirmations without owner+deliverable+timing
-                      ("I'll handle it", "on it", "I'll get to it")
-- VAGUE REFERRAL    — "ask Steve" / "talk to design" with no specific question
-                      or concrete way for the person to act on it
-- UNCLEAR OWNERSHIP — "someone should...", "we need to...", "this needs doing"
-                      with no named owner
-- VAGUE TIMELINE    — soft timing words ("soon", "later", "asap", "this week"
-                      with no concrete day/time)
-- PASSIVE MESSAGE   — "let me know", "thoughts?", "circle back", "we should
-                      sync" with no clear next step or commitment
+# What to flag
+Flag the message ONLY if it falls into one of these categories. Pick the
+SINGLE best-fitting type — don't stretch.
 
-DO NOT flag:
-- Clear questions that genuinely seek information ("can I clarify what we
-  mean by deliverables this week?" is GREAT — it's a clarifying question,
-  not a vague timeline. The phrase "this week" is a SCOPE here, not a soft
-  promise to do something later.)
-- Messages that already include a concrete deadline, owner, or deliverable
-- Greetings, acknowledgments, social messages, jokes
-- Messages where flagging would feel pedantic or condescending
+- VAGUE COMMITMENT   — promises/confirmations without owner + deliverable + timing.
+                       ("I'll handle it", "on it", "I'll get to it", "leave it with me")
+- VAGUE REFERRAL     — pointing at a person/team without a concrete ask
+                       ("ask Steve", "talk to design", "loop in marketing").
+- UNCLEAR OWNERSHIP  — describes work without naming who's doing it
+                       ("someone should...", "we need to...", "this needs doing").
+- VAGUE TIMELINE     — soft timing words with no concrete day/time
+                       ("soon", "later", "asap", "by end of week", "next week"
+                        when used as a deadline).
+- PASSIVE MESSAGE    — punt without a concrete next step
+                       ("let me know", "thoughts?", "circle back", "we should sync").
+- HEDGED ASK         — a real ask buried in qualifiers
+                       ("just wondering if maybe you could possibly...").
+- BURIED LEDE        — the actual decision/blocker arrives after preamble
+                       (the most important thing should be in the first sentence).
+- AMBIGUOUS PRONOUN  — "this" / "that" / "it" referring to something the
+                       reader can't unambiguously identify from context.
 
-When in doubt, do not flag. The pet should feel insightful, not annoying.
+# What NOT to flag
+- Clear questions that seek information — even if they contain words like
+  "this week" used as a SCOPE, not a deadline.
+- Messages that already name owner + deliverable + concrete time.
+- Greetings, acknowledgments ("got it", "sounds good"), social, jokes.
+- Drafts that are still being typed and don't have enough content yet to
+  judge fairly. (When in doubt: do not flag.)
+- Messages where flagging would feel pedantic, condescending, or like
+  fixing something that isn't broken.
 
-Reply with ONLY one JSON object, no prose:
-{"flag": true, "type": "<one type from above>", "suggestion": "<a concrete rewrite the user could actually paste — fix the specific problem, use real specifics from the channel context (real names, real days, real deliverables) instead of [bracket placeholders]>"}
-or
+# How to write the suggestion
+- ONE concrete rewrite the user could paste verbatim. Not a checklist.
+- Use REAL names, days, and deliverables drawn from the channel context.
+  Channel members for proj-pomegranate: Mary, Lesley, Steve, Alex.
+- NEVER use bracket placeholders like [name] or [deadline]. If you can't
+  guess a real specific from context, infer the most plausible one
+  (e.g. "Thursday EOD" if the thread is mid-week, "Mary" if she owns
+  the area being discussed).
+- Match the user's voice and tone. Don't make their casual draft sound
+  like a corporate memo. If their original is one short line, your
+  rewrite should also be one short line.
+- Keep the same INTENT. Don't add commitments the user didn't make.
+- Vary your phrasing — readers will see many of these over time.
+- Briefly explain the WHY in the "reason" field (one short sentence).
+
+# Output
+Reply with ONLY one JSON object, nothing else:
+
+{"flag": true, "type": "<ONE category above>", "reason": "<one short sentence on why>", "suggestion": "<the concrete rewrite>"}
+
+or, if the message is already fine:
+
 {"flag": false}`;
 
-async function analyzeMessageWithAI(text, channelId) {
+// Build a `user` content string sized to the recent context. `recentChannelContextForAi`
+// already truncates, but we keep the call site simple here.
+function buildCoachUserPrompt(text, channelId) {
+  const context = recentChannelContextForAi(channelId) || '(empty so far)';
+  const petName = initiatedPet?.petName || 'the pet';
+  const projectName = initiatedPet?.project?.name || 'this project';
+  return [
+    `You are coaching for ${petName} on the project "${projectName}".`,
+    ``,
+    `Recent channel messages (oldest first):`,
+    context,
+    ``,
+    `Draft the user is about to send:`,
+    `"${text}"`,
+  ].join('\n');
+}
+
+async function analyzeMessageWithAI(text, channelId, signal) {
   if (!text || text.trim().length < 4) return null;
   const { apiKey } = await Store.get('apiKey');
   if (!apiKey || !apiKey.trim()) return null;
 
-  const context = recentChannelContextForAi(channelId) || '(empty so far)';
-  const userPrompt = `Recent channel transcript:\n${context}\n\nMessage to judge:\n"${text}"`;
+  const userPrompt = buildCoachUserPrompt(text, channelId);
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -985,10 +1043,11 @@ async function analyzeMessageWithAI(text, channelId) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 220,
+        max_tokens: 320,
         system: COACH_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],
       }),
+      signal,
     });
     const data = await res.json();
     const raw = data?.content?.[0]?.text?.trim();
@@ -1001,12 +1060,89 @@ async function analyzeMessageWithAI(text, channelId) {
     if (!parsed.type || !parsed.suggestion) return null;
     return {
       type: String(parsed.type).toUpperCase(),
+      reason: parsed.reason ? String(parsed.reason) : '',
       original: text,
       suggestion: String(parsed.suggestion),
     };
-  } catch {
+  } catch (e) {
+    if (e?.name === 'AbortError') return null;
     return null;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  LIVE AI TYPING COACH — debounced, cached, cancellable. Replaces the
+//  regex-based live pulse with real per-message coaching while the user types.
+// ─────────────────────────────────────────────────────────────────────────────
+const LIVE_COACH_DEBOUNCE_MS = 650;
+const LIVE_COACH_MIN_CHARS   = 12;     // skip tiny drafts
+let _liveCoachTimer  = null;
+let _liveCoachAbort  = null;
+const _liveCoachCache = new Map();      // trimmed text -> hit | null
+const _LIVE_COACH_CACHE_MAX = 40;       // bound memory
+
+function _liveCoachCachePut(text, hit) {
+  if (_liveCoachCache.size >= _LIVE_COACH_CACHE_MAX) {
+    const firstKey = _liveCoachCache.keys().next().value;
+    _liveCoachCache.delete(firstKey);
+  }
+  _liveCoachCache.set(text, hit);
+}
+
+function cancelLiveCoach() {
+  if (_liveCoachTimer) { clearTimeout(_liveCoachTimer); _liveCoachTimer = null; }
+  if (_liveCoachAbort) { try { _liveCoachAbort.abort(); } catch {} _liveCoachAbort = null; }
+}
+
+function applyLiveCoachResult(text, hit) {
+  // Bail if the user has moved on to a different draft.
+  if (composerInput.value.trim() !== text) return;
+  if (_liveDismissedFor === text) return;
+
+  if (!hit) {
+    if (!petNotification.classList.contains('hidden')) hideNotification();
+    petBubble.classList.remove('has-suggestion');
+    if (pendingSuggestion?.original === text) pendingSuggestion = null;
+    return;
+  }
+  if (_petTriggerMode === 'active') {
+    if (!pendingSuggestion || pendingSuggestion.original !== hit.original) showNotification(hit);
+  } else {
+    armPetBubble(hit);
+  }
+}
+
+async function runLiveCoachNow(trimmed) {
+  // Cache hit — return synchronously.
+  if (_liveCoachCache.has(trimmed)) {
+    applyLiveCoachResult(trimmed, _liveCoachCache.get(trimmed));
+    return;
+  }
+  _liveCoachAbort = new AbortController();
+  const signal = _liveCoachAbort.signal;
+  const channelId = currentChannel;
+  try {
+    const hit = await analyzeMessageWithAI(trimmed, channelId, signal);
+    if (signal.aborted) return;
+    _liveCoachCachePut(trimmed, hit);
+    if (currentChannel !== channelId) return;
+    applyLiveCoachResult(trimmed, hit);
+  } catch (_) {
+    // network/parse failure — fall back silently to regex (already armed below)
+  } finally {
+    _liveCoachAbort = null;
+  }
+}
+
+function scheduleLiveCoach(trimmed) {
+  cancelLiveCoach();
+  if (trimmed.length < LIVE_COACH_MIN_CHARS) return;
+  // Cache lookup is instant — apply right away without waiting for debounce.
+  if (_liveCoachCache.has(trimmed)) {
+    applyLiveCoachResult(trimmed, _liveCoachCache.get(trimmed));
+    return;
+  }
+  _liveCoachTimer = setTimeout(() => { runLiveCoachNow(trimmed); }, LIVE_COACH_DEBOUNCE_MS);
 }
 
 // Hooked into sendMessage. Async — updates the bubble + posts the inline
@@ -1629,19 +1765,36 @@ composerInput.addEventListener('input', () => {
   const text = composerInput.value;
   const trimmed = text.trim();
   if (!trimmed || trimmed.startsWith('/') || !initiatedPet) {
+    cancelLiveCoach();
     if (!petNotification.classList.contains('hidden')) hideNotification();
     petBubble.classList.remove('has-suggestion');
     pendingSuggestion = null;
     return;
   }
   if (_liveDismissedFor === trimmed) return;
-  const hit = analyzeText(text);
-  if (!hit) {
-    if (!petNotification.classList.contains('hidden')) hideNotification();
-    petBubble.classList.remove('has-suggestion');
-    pendingSuggestion = null;
+
+  // Live AI coach — debounced, cancellable, cached. Reads channel context
+  // and produces a real per-draft rewrite (not a canned regex template).
+  // Falls back to the cheap regex when the user has no API key set.
+  scheduleLiveCoach(trimmed);
+
+  // While the AI is thinking, keep the bubble feeling responsive with the
+  // regex preview ONLY if the AI hasn't already disagreed about this draft.
+  // If the cache says the AI cleared this exact text, don't flash the regex.
+  const cachedHit = _liveCoachCache.get(trimmed);
+  if (cachedHit !== undefined) {
+    // applyLiveCoachResult already ran from scheduleLiveCoach; nothing to do.
     return;
   }
+  const hit = analyzeText(text);
+  if (!hit) {
+    // No regex hit either — clear stale state but let the AI have the final say.
+    if (!petNotification.classList.contains('hidden')) hideNotification();
+    petBubble.classList.remove('has-suggestion');
+    if (pendingSuggestion && pendingSuggestion.original !== trimmed) pendingSuggestion = null;
+    return;
+  }
+  // Optimistic regex pulse — the AI will overwrite/clear this in ~650ms.
   if (_petTriggerMode === 'active') {
     if (!pendingSuggestion || pendingSuggestion.original !== hit.original) showNotification(hit);
   } else {
@@ -1664,21 +1817,91 @@ btnDismissNotif.addEventListener('click', () => {
   composerInput.focus();
 });
 
-petBubble.addEventListener('click', () => {
+petBubble.addEventListener('click', async () => {
+  // If notif is already open, second click closes it.
   if (!petNotification.classList.contains('hidden')) { hideNotification(); return; }
-  if (pendingSuggestion) { showNotification(pendingSuggestion); return; }
-  // Idle hello
-  petNotification.classList.remove('hidden');
-  notifTypeBadge.textContent  = 'HELLO!';
-  notifOriginal.textContent   = '(no messages flagged yet)';
-  const name = initiatedPet?.petName || 'Pet';
-  notifSuggestion.textContent = `Hi! I'm ${name}. I'll flag vague messages and suggest clearer alternatives. Try sending a message like "I'll handle it" or "Ask Steve."`;
-  btnUseSuggestion.style.display = 'none';
-  setTimeout(() => {
-    hideNotification();
-    btnUseSuggestion.style.display = '';
-  }, 4000);
+
+  const draft = composerInput.value;
+  const trimmed = draft.trim();
+
+  // No draft → idle hello (original behavior).
+  if (!trimmed || trimmed.startsWith('/')) {
+    if (pendingSuggestion) { showNotification(pendingSuggestion); return; }
+    petNotification.classList.remove('hidden');
+    notifTypeBadge.textContent  = 'HELLO!';
+    notifOriginal.textContent   = '(type a draft, then click me — I\'ll review it)';
+    const name = initiatedPet?.petName || 'Pet';
+    notifSuggestion.textContent = `Hi! I'm ${name}. Type a message in the composer and click me — I'll evaluate it and suggest something clearer if it needs it.`;
+    const reasonEl = document.getElementById('notif-reason');
+    if (reasonEl) { reasonEl.textContent = ''; reasonEl.style.display = 'none'; }
+    btnUseSuggestion.style.display = 'none';
+    setTimeout(() => {
+      hideNotification();
+      btnUseSuggestion.style.display = '';
+    }, 4000);
+    return;
+  }
+
+  // If we already have a fresh AI verdict for this exact draft, just show it.
+  if (pendingSuggestion && pendingSuggestion.original === trimmed) {
+    showNotification(pendingSuggestion);
+    return;
+  }
+  if (_liveCoachCache.has(trimmed)) {
+    const cached = _liveCoachCache.get(trimmed);
+    if (cached) { showNotification(cached); return; }
+    // Cached "fine" verdict — show the all-clear card without re-fetching.
+    showAllClearCard(trimmed);
+    return;
+  }
+
+  // Cancel any pending live-coach call (we're about to do this work synchronously here).
+  cancelLiveCoach();
+
+  // Show a "thinking…" card while we wait for the AI.
+  showThinkingCard(trimmed);
+
+  const channelId = currentChannel;
+  const hit = await analyzeMessageWithAI(trimmed, channelId).catch(() => null);
+
+  // Bail if user has moved on while the request was in flight.
+  if (composerInput.value.trim() !== trimmed) return;
+
+  _liveCoachCachePut(trimmed, hit || null);
+  if (!hit) {
+    showAllClearCard(trimmed);
+  } else {
+    showNotification(hit);
+  }
 });
+
+// Helpers used by the on-click flow.
+function showThinkingCard(text) {
+  petNotification.classList.remove('hidden');
+  notifTypeBadge.textContent  = 'THINKING…';
+  notifOriginal.textContent   = text;
+  notifSuggestion.textContent = 'Reading the channel context and your draft…';
+  const reasonEl = document.getElementById('notif-reason');
+  if (reasonEl) { reasonEl.textContent = ''; reasonEl.style.display = 'none'; }
+  btnUseSuggestion.style.display = 'none';
+}
+function showAllClearCard(text) {
+  petNotification.classList.remove('hidden');
+  notifTypeBadge.textContent  = 'LOOKS GOOD ✓';
+  notifOriginal.textContent   = text;
+  notifSuggestion.textContent = 'Clear, specific, and ready to send. Nothing to fix.';
+  const reasonEl = document.getElementById('notif-reason');
+  if (reasonEl) { reasonEl.textContent = ''; reasonEl.style.display = 'none'; }
+  btnUseSuggestion.style.display = 'none';
+  pendingSuggestion = null;
+  petBubble.classList.remove('has-suggestion');
+  setTimeout(() => {
+    if (notifTypeBadge.textContent === 'LOOKS GOOD ✓') {
+      hideNotification();
+      btnUseSuggestion.style.display = '';
+    }
+  }, 3500);
+}
 
 // Channel switcher
 document.querySelectorAll('.channel-item').forEach(el => {
@@ -1760,6 +1983,10 @@ async function handlePendingZoomReport() {
   localStorage.removeItem('mp_pending_zoom_report');
   if (!initiatedPet) return; // can't render without pet
 
+  // Always surface meeting recaps in the project channel so the user lands
+  // in the right place when the listen tab tells us to focus.
+  if (currentChannel !== 'proj-pomegranate') switchChannel('proj-pomegranate');
+
   // Apply treats
   if (Array.isArray(report.treats) && report.treats.length) {
     grantTreats(report.treats);
@@ -1769,6 +1996,17 @@ async function handlePendingZoomReport() {
     title: report.title || 'Live meeting',
     bullets: report.bullets || [],
     treatCount: (report.treats || []).length,
+  });
+}
+
+// Background script tells the existing slack tab to surface the freshly-
+// written report whenever a meeting wraps up. Without this, the recap only
+// appeared on next slack.html load — invisible if the tab was already open.
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === 'PROCESS_PENDING_REPORT') {
+      handlePendingZoomReport();
+    }
   });
 }
 

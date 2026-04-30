@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="tokens.css" />
-  <link rel="stylesheet" href="listen.css?v=2" />
+  <link rel="stylesheet" href="listen.css?v=5" />
 </head>
 <body>
 
@@ -85,7 +85,10 @@
 
       <!-- Live transcript feed -->
       <div class="transcript-feed-wrap">
-        <div class="feed-label">LIVE TRANSCRIPT</div>
+        <div class="feed-label">
+          <span>LIVE TRANSCRIPT</span>
+          <button class="btn-copy-transcript" id="btn-copy-transcript" title="Copy the full transcript to clipboard">📋 copy transcript</button>
+        </div>
         <div id="transcript-feed" class="transcript-feed">
           <div class="feed-placeholder">Waiting for speech...</div>
         </div>

@@ -54,23 +54,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = getStoredUser();
   if (!user) { showScreen('login'); return; }
 
-  const { currentSession } = await Store.get('currentSession');
-  if (currentSession && currentSession.active) {
-    // Real listening lives in the small listen.html popup window.
-    if (isExtension) {
-      chrome.windows.create({
-        url: chrome.runtime.getURL('listen.html'),
-        type: 'popup',
-        width: 420,
-        height: 720,
-        focused: true,
-      });
-      window.close();
-      return;
-    }
-    window.open('listen.html', 'synko-listen', 'popup,width=420,height=720');
-    return;
-  }
+  // Always start on the home dashboard. Don't auto-jump into the listening
+  // window when a session is "active" — the user clicking the extension icon
+  // is a navigation gesture and should land on the home screen with the pet
+  // status and start/open-slack buttons. They can resume a meeting from here
+  // if they want.
   showScreen('home');
   renderHome(user);
 });
@@ -139,6 +127,9 @@ function bindNavigation() {
 
   // Start live meeting
   document.getElementById('btn-start-meeting').addEventListener('click', startLiveMeeting);
+
+  // Reset pet (clears mp_initiated_pet so the user can re-init in Slack)
+  document.getElementById('btn-reset-pet').addEventListener('click', handleResetPet);
 
   // Live-meeting screen
   document.getElementById('btn-ask-everyone').addEventListener('click', () => startPoll());
@@ -227,11 +218,13 @@ function renderHome(user) {
   const initiatedCard = document.getElementById('initiated-pet-card');
   const noPetCard = document.getElementById('no-pet-card');
   const startBtn = document.getElementById('btn-start-meeting');
+  const resetBtn = document.getElementById('btn-reset-pet');
 
   if (pet) {
     initiatedCard.style.display = 'flex';
     noPetCard.style.display = 'none';
     startBtn.disabled = false;
+    if (resetBtn) resetBtn.style.display = 'inline-block';
 
     document.getElementById('initiated-pet-name').textContent = (pet.petName || 'Your Pet').toUpperCase();
     document.getElementById('initiated-project-name').textContent = pet.project?.name || 'Team project';
@@ -245,7 +238,28 @@ function renderHome(user) {
     initiatedCard.style.display = 'none';
     noPetCard.style.display = 'flex';
     startBtn.disabled = true;
+    if (resetBtn) resetBtn.style.display = 'none';
   }
+}
+
+// ── Reset pet ────────────────────────────────────────────────────────────────
+// Clears the initiated pet (and any pending zoom report) so the user can
+// re-init from Slack. Account / login state is preserved.
+async function handleResetPet() {
+  const pet = loadInitiatedPet();
+  const name = pet?.petName || 'your pet';
+  const ok = confirm(`Reset ${name}? This clears the team pet so you can hatch a new one in Slack. Your account stays.`);
+  if (!ok) return;
+
+  localStorage.removeItem('mp_initiated_pet');
+  localStorage.removeItem('mp_pending_zoom_report');
+  if (isExtension) {
+    try { await chrome.storage.local.remove(['mp_initiated_pet', 'mp_pending_zoom_report', 'currentSession']); } catch {}
+  }
+  localStorage.removeItem('currentSession');
+
+  const user = getStoredUser();
+  if (user) renderHome(user);
 }
 
 // ── Start live meeting ────────────────────────────────────────────────────────
@@ -599,7 +613,9 @@ async function endMeeting() {
   await handoffToSlack(currentSession);
 
   if (isExtension) {
-    chrome.runtime.sendMessage({ type: 'OPEN_SLACK' });
+    // Ask the background to focus an existing slack tab (and surface the
+    // pending report there) instead of opening a duplicate.
+    try { chrome.runtime.sendMessage({ type: 'OPEN_SLACK_FOR_REPORT' }); } catch {}
     window.close();
   } else {
     window.location.href = 'slack.html';

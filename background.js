@@ -18,8 +18,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'OPEN_SLACK') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('slack.html') });
-    sendResponse({ ok: true });
+    focusOrOpenSlackTab(false).then(sendResponse);
+    return true;
+  }
+
+  // Triggered by listen.js endMeeting — focus the user's existing slack tab
+  // (if any), tell it to surface the freshly-written pending zoom report,
+  // and close the listen tab. Falls back to opening a new tab.
+  if (message.type === 'OPEN_SLACK_FOR_REPORT') {
+    focusOrOpenSlackTab(true).then((res) => {
+      const senderTabId = sender?.tab?.id;
+      if (senderTabId) {
+        // Close the listen tab in a moment so the user lands on slack.
+        setTimeout(() => chrome.tabs.remove(senderTabId).catch(() => {}), 150);
+      }
+      sendResponse(res);
+    });
     return true;
   }
 
@@ -77,4 +91,30 @@ async function handleAnalysis(transcript) {
 async function getSession() {
   const { currentSession } = await chrome.storage.local.get('currentSession');
   return currentSession || { treats: [], moments: [], analyzeCount: 0 };
+}
+
+// Focus an existing slack.html tab if one is open; otherwise open a new one.
+// When triggerReport is true, sends a message to the tab telling it to
+// surface the just-written `mp_pending_zoom_report` payload.
+async function focusOrOpenSlackTab(triggerReport) {
+  const slackUrl = chrome.runtime.getURL('slack.html');
+  try {
+    const tabs = await chrome.tabs.query({});
+    // Match any tab whose URL starts with our slack page (extension origin).
+    const existing = tabs.find(t => (t.url || '').startsWith(slackUrl));
+    if (existing) {
+      await chrome.tabs.update(existing.id, { active: true });
+      if (existing.windowId !== undefined) {
+        try { await chrome.windows.update(existing.windowId, { focused: true }); } catch {}
+      }
+      if (triggerReport) {
+        try { await chrome.tabs.sendMessage(existing.id, { type: 'PROCESS_PENDING_REPORT' }); } catch {}
+      }
+      return { ok: true, focused: true };
+    }
+    await chrome.tabs.create({ url: slackUrl });
+    return { ok: true, opened: true };
+  } catch (e) {
+    return { ok: false, error: e?.message };
+  }
 }
