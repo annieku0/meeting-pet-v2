@@ -659,6 +659,18 @@ const COLLAB_PATTERNS = [
 let currentChannel = 'general';
 let pendingSuggestion = null;   // { original, suggestion, type }
 let _bypassCheck = false;       // true after dismiss — lets the next send go through
+let _petTriggerMode = 'quiet';  // 'quiet' = pulse + click-to-reveal · 'active' = auto-popup
+                                // (loaded from chrome.storage.local on init; see Store below)
+
+// ── Storage helper (matches the one in settings.html) ────────────────────────
+const Store = {
+  get(key) {
+    if (typeof chrome !== 'undefined' && chrome.storage)
+      return new Promise(res => chrome.storage.local.get(key, res));
+    try { return Promise.resolve({ [key]: JSON.parse(localStorage.getItem(key)) }); }
+    catch { return Promise.resolve({ [key]: null }); }
+  },
+};
 
 // ── DOM refs ─────────────────────────────────────────────────────────────────
 const messagesArea    = document.getElementById('messages-area');
@@ -720,7 +732,7 @@ function buildMessageEl(msg) {
   group.className = 'message-group' + (isYou ? ' is-you' : '');
 
   group.innerHTML = `
-    <div class="message-avatar" style="color:${msg.color}">${msg.avatar}</div>
+    <div class="message-avatar" style="background:${msg.color};color:#fff">${msg.avatar}</div>
     <div class="message-content">
       <div class="message-header">
         <span class="message-user" style="color:${msg.color}">${msg.user}</span>
@@ -766,6 +778,8 @@ function showNotification(data) {
   notifOriginal.textContent   = data.original;
   notifSuggestion.textContent = data.suggestion;
   petNotification.classList.remove('hidden');
+  // Showing the panel means the pulse is no longer needed (user is engaged).
+  petBubble.classList.remove('has-suggestion');
 
   // Gentle bounce on pet bubble
   petBubble.style.transform = 'translateY(-4px)';
@@ -775,6 +789,13 @@ function showNotification(data) {
 function hideNotification() {
   petNotification.classList.add('hidden');
   pendingSuggestion = null;
+  petBubble.classList.remove('has-suggestion');
+}
+
+// ── Quiet-mode arming: stash the hit on the bubble and pulse, no popup ───────
+function armPetBubble(hit) {
+  pendingSuggestion = hit;
+  petBubble.classList.add('has-suggestion');
 }
 
 // ── Typing indicator ─────────────────────────────────────────────────────────
@@ -843,19 +864,23 @@ function sendMessage() {
   const text = composerInput.value.trim();
   if (!text) return;
 
-  // Check for collaboration pattern — block send and show suggestion
-  // (bypass once if user already dismissed the suggestion for this message)
+  // Check for collaboration pattern. Send is never blocked — the pet only coaches.
+  // Whether the suggestion surfaces immediately or waits for a click depends on
+  // _petTriggerMode (configurable in settings.html).
   if (!_bypassCheck) {
     const hit = analyzeText(text);
     if (hit) {
-      showNotification(hit);
-      composerInput.focus();
-      return;
+      if (_petTriggerMode === 'active') {
+        showNotification(hit);
+      } else {
+        // Quiet mode: arm the pet bubble. User clicks to see the suggestion.
+        armPetBubble(hit);
+      }
     }
   }
   _bypassCheck = false;
 
-  // All clear — send the message
+  // Send the message regardless of whether a suggestion was triggered.
   composerInput.value = '';
 
   const now = new Date();
@@ -918,34 +943,93 @@ btnSend.addEventListener('click', sendMessage);
 composerInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
-// Reset bypass if user edits their message after dismissing
-composerInput.addEventListener('input', () => { _bypassCheck = false; });
 
-btnUseSuggestion.addEventListener('click', useSuggestion);
+// Live analysis as the user types — drives the pet's pulsing alert.
+// When a vague phrase is detected, arm the pet (or show the panel directly
+// in active mode). When the text changes such that no pattern matches,
+// disarm so the alert clears.
+let _liveDismissedFor = null;   // exact text the user explicitly dismissed
+composerInput.addEventListener('input', () => {
+  // Reset the post-dismiss bypass once they edit.
+  _bypassCheck = false;
+
+  const text = composerInput.value;
+  const trimmed = text.trim();
+
+  // Empty composer → clear any pending alert.
+  if (!trimmed) {
+    if (!petNotification.classList.contains('hidden')) hideNotification();
+    petBubble.classList.remove('has-suggestion');
+    pendingSuggestion = null;
+    return;
+  }
+
+  // Suppress live re-firing on the same dismissed text.
+  if (_liveDismissedFor === trimmed) return;
+
+  const hit = analyzeText(text);
+  if (!hit) {
+    // User edited toward clarity — disarm.
+    if (!petNotification.classList.contains('hidden')) hideNotification();
+    petBubble.classList.remove('has-suggestion');
+    pendingSuggestion = null;
+    return;
+  }
+
+  // Hit found.
+  if (_petTriggerMode === 'active') {
+    // Active mode shows the panel immediately (only if not already showing
+    // the same suggestion, to avoid re-popping on every keystroke).
+    if (!pendingSuggestion || pendingSuggestion.original !== hit.original) {
+      showNotification(hit);
+    }
+  } else {
+    armPetBubble(hit);
+  }
+});
+
+btnUseSuggestion.addEventListener('click', () => {
+  _liveDismissedFor = null; // accepting the suggestion clears any dismissal
+  useSuggestion();
+});
 btnDismissNotif.addEventListener('click', () => {
   // Allow the next send to go through without re-flagging
   _bypassCheck = true;
+  // Remember exactly what the user dismissed so live analysis doesn't
+  // immediately re-arm the pet on the same input.
+  _liveDismissedFor = composerInput.value.trim();
   hideNotification();
   composerInput.focus();
 });
 
 petBubble.addEventListener('click', () => {
-  if (petNotification.classList.contains('hidden')) {
-    // Show a friendly idle message if no active suggestion
-    if (!pendingSuggestion) {
-      petNotification.classList.remove('hidden');
-      notifTypeBadge.textContent  = 'HELLO!';
-      notifOriginal.textContent   = '(no messages flagged yet)';
-      notifSuggestion.textContent = `Hi! I'm ${PET_NAME}. I'll flag vague messages and suggest clearer alternatives. Try sending a message like "I'll handle it" or "Ask Steve."`;
-      document.getElementById('btn-use-suggestion').style.display = 'none';
-      setTimeout(() => {
-        hideNotification();
-        document.getElementById('btn-use-suggestion').style.display = '';
-      }, 4000);
-    }
-  } else {
+  // Click while the panel is open → close it.
+  if (!petNotification.classList.contains('hidden')) {
     hideNotification();
+    return;
   }
+
+  // Quiet-mode pending suggestion stashed by armPetBubble — surface it.
+  if (pendingSuggestion) {
+    showNotification(pendingSuggestion);
+    return;
+  }
+
+  // No pending suggestion — show a friendly idle message.
+  petNotification.classList.remove('hidden');
+  notifTypeBadge.textContent  = 'HELLO!';
+  notifOriginal.textContent   = '(no messages flagged yet)';
+  notifSuggestion.textContent = `Hi! I'm ${PET_NAME}. I'll flag vague messages and suggest clearer alternatives. Try sending a message like "I'll handle it" or "Ask Steve."`;
+  document.getElementById('btn-use-suggestion').style.display = 'none';
+  setTimeout(() => {
+    hideNotification();
+    document.getElementById('btn-use-suggestion').style.display = '';
+  }, 4000);
+});
+
+// Load persisted pet trigger mode (defaults to 'quiet' for new users).
+Store.get('petTriggerMode').then(({ petTriggerMode }) => {
+  _petTriggerMode = petTriggerMode === 'active' ? 'active' : 'quiet';
 });
 
 document.querySelectorAll('.channel-item').forEach(el => {

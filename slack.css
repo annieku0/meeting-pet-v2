@@ -1,21 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
 
 :root {
-  --sb:        #1A0030;
-  --sb-hover:  #2A0048;
-  --sb-active: #3A0060;
-  --main:      #0D0018;
-  --msg-bg:    #160022;
-  --border:    #3A1055;
-  --text:      #E8D8FF;
-  --dim:       #8060AA;
-  --dark:      #4A2870;
-  --accent:    #C060FF;
-  --green:     #40E080;
-  --yellow:    #FFD040;
-  --red:       #FF4050;
-  --pixel:     'Press Start 2P', monospace;
-  --sans:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Slack-faithful chrome — calibrated to match slack-pet/SlackFrame so the
+     two repos read as one product. */
+  --sb:           #3f0e40;
+  --sb-hover:     rgba(255, 255, 255, 0.06);
+  --sb-active:    #1164a3;
+  --sb-text:      rgba(255, 255, 255, 0.78);
+  --sb-text-dim:  rgba(255, 255, 255, 0.5);
+  --sb-search-bg: rgba(0, 0, 0, 0.18);
+  --sb-search-border: rgba(255, 255, 255, 0.14);
+  --main:         #ffffff;
+  --msg-bg:       #ffffff;
+  --msg-hover:    #f8f8f8;
+  --border:       #e5e5e4;
+  --text:         #1d1c1d;
+  --dim:          #616061;
+  --dark:         #cccccc;
+  --accent:       #1264a3;            /* Slack link blue */
+  --accent2:      #FF8040;            /* retro orange — pet signals only */
+  --green:        #2bac76;
+  --yellow:       #ecb22e;
+  --red:          #e01e5a;
+  --pixel:        'Press Start 2P', monospace;
+  --pixelify:     'Pixelify Sans', 'Press Start 2P', monospace;
+  --sans:         'Slack-Lato', 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,7 +35,10 @@ html, body {
   background: var(--main);
   color: var(--text);
   font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.46668;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Layout ── */
@@ -36,34 +49,35 @@ html, body {
 
 /* ── Sidebar ── */
 .slack-sidebar {
-  width: 230px;
+  width: 256px;
   background: var(--sb);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow-y: auto;
+  color: var(--sb-text);
 }
 
 .workspace-header {
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   flex-shrink: 0;
 }
 .workspace-name {
-  font-family: var(--pixel);
-  font-size: 9px;
-  color: var(--accent);
-  letter-spacing: 0.5px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0;
 }
 .workspace-status {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 5px;
+  margin-top: 4px;
   font-size: 12px;
-  color: var(--dim);
+  color: var(--sb-text-dim);
 }
 .status-dot {
   width: 8px;
@@ -73,32 +87,98 @@ html, body {
   flex-shrink: 0;
 }
 
-.sidebar-section { padding: 14px 8px 6px; }
+.sidebar-section { padding: 8px 0 4px; }
 .sidebar-section-label {
-  font-family: var(--pixel);
-  font-size: 7px;
-  color: var(--dim);
-  letter-spacing: 1px;
-  padding: 0 8px 8px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--sb-text-dim);
+  letter-spacing: 0;
+  padding: 8px 16px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-section-label .caret {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* Sidebar search box (matches slack-pet) */
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px;
+  padding: 5px 8px;
+  background: var(--sb-search-bg);
+  border: 1px solid var(--sb-search-border);
+  border-radius: 6px;
+  color: var(--sb-text);
+  font-size: 13px;
+  font-family: var(--sans);
+}
+
+/* Utility links: Threads / Drafts / Mentions */
+.sidebar-utility {
+  padding: 4px 0 6px;
+}
+.util-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 16px;
+  font-size: 15px;
+  color: var(--sb-text);
+  cursor: pointer;
+  font-family: var(--sans);
+}
+.util-row:hover { background: var(--sb-hover); }
+.util-row .util-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  font-size: 13px;
+  opacity: 0.9;
 }
 
 .channel-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  font-size: 13px;
-  color: var(--dim);
+  gap: 8px;
+  padding: 4px 16px;
+  font-size: 15px;
+  color: var(--sb-text);
   cursor: pointer;
-  border-radius: 3px;
   transition: background 0.1s, color 0.1s;
   user-select: none;
+  font-family: var(--sans);
 }
-.channel-item:hover  { background: var(--sb-hover); color: var(--text); }
-.channel-item.active { background: var(--sb-active); color: var(--text); }
-.channel-item .ch-hash { font-size: 14px; opacity: 0.6; }
-.channel-item .unread { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; margin-left: auto; }
+.channel-item:hover  { background: var(--sb-hover); }
+.channel-item.active {
+  background: var(--sb-active);
+  color: #ffffff;
+  font-weight: 700;
+}
+.channel-item .ch-hash { color: var(--sb-text-dim); width: 16px; text-align: center; }
+.channel-item .unread { width: 6px; height: 6px; background: #ffffff; border-radius: 50%; margin-left: auto; }
 .channel-item .online-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
+
+/* Search box at top of sidebar */
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px 4px;
+  padding: 5px 8px;
+  background: var(--sb-search-bg);
+  border: 1px solid var(--sb-search-border);
+  border-radius: 6px;
+  color: var(--sb-text);
+  font-size: 13px;
+  font-family: var(--sans);
+}
 
 /* ── Main area ── */
 .slack-main {
@@ -110,22 +190,71 @@ html, body {
 }
 
 .channel-header {
-  padding: 13px 20px;
+  padding: 8px 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-shrink: 0;
   background: var(--msg-bg);
+  font-family: var(--sans);
 }
-.channel-header-name {
-  font-family: var(--pixel);
-  font-size: 10px;
+.ch-header-left { flex: 1; min-width: 0; }
+.ch-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 2px 4px;
+  margin: 0 -4px;
+  border-radius: 4px;
+  cursor: pointer;
   color: var(--text);
-  letter-spacing: 0.5px;
 }
-.channel-header-sep { color: var(--dark); font-size: 18px; }
-.channel-header-topic { font-size: 13px; color: var(--dim); }
+.ch-header-title:hover { background: #f4f4f4; }
+.ch-header-name {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: 0;
+}
+.ch-header-title svg { color: var(--dim); }
+.ch-header-topic {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  font-family: var(--sans);
+}
+/* Legacy aliases (slack.js still sets these IDs) */
+#channel-header-name { font-family: var(--sans); font-size: 16px; font-weight: 900; color: var(--text); }
+#channel-header-topic { font-size: 12px; color: var(--dim); font-family: var(--sans); }
+.channel-header-sep { display: none; }
+
+.ch-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.ch-header-actions button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-weight: 600;
+}
+.ch-header-actions button:hover {
+  background: #f6f6f6;
+  border-color: var(--border);
+}
 
 /* ── Messages ── */
 .messages-area {
@@ -148,27 +277,29 @@ html, body {
 
 .message-group {
   display: flex;
-  gap: 10px;
-  padding: 5px 8px;
+  gap: 12px;
+  padding: 6px 8px;
   border-radius: 4px;
   transition: background 0.1s;
+  font-family: var(--sans);
 }
-.message-group:hover { background: rgba(255,255,255,0.03); }
-.message-group.is-you { background: rgba(192,96,255,0.05); }
-.message-group.is-you:hover { background: rgba(192,96,255,0.08); }
+.message-group:hover { background: var(--msg-hover); }
+.message-group.is-you { background: rgba(29, 155, 209, 0.04); }
+.message-group.is-you:hover { background: rgba(29, 155, 209, 0.08); }
 
 .message-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 4px;
+  border-radius: 6px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--pixel);
-  font-size: 10px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 900;
   background: var(--sb);
-  border: 1px solid var(--border);
+  color: #ffffff;
 }
 .message-content { flex: 1; min-width: 0; }
 .message-header {
@@ -177,9 +308,9 @@ html, body {
   gap: 8px;
   margin-bottom: 2px;
 }
-.message-user   { font-weight: 700; font-size: 14px; }
-.message-time   { font-size: 11px; color: var(--dim); }
-.message-text   { font-size: 14px; color: var(--text); line-height: 1.55; word-break: break-word; }
+.message-user   { font-weight: 900; font-size: 15px; color: var(--text); font-family: var(--sans); }
+.message-time   { font-size: 12px; color: var(--dim); }
+.message-text   { font-size: 15px; color: var(--text); line-height: 1.46668; word-break: break-word; font-family: var(--sans); }
 .message-text.flagged {
   color: var(--yellow);
   position: relative;
@@ -198,45 +329,50 @@ html, body {
 
 /* ── Composer ── */
 .message-composer {
-  padding: 10px 20px 16px;
+  padding: 4px 20px 20px;
   flex-shrink: 0;
   background: var(--msg-bg);
 }
 .composer-inner {
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  transition: border-color 0.15s;
-  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
 }
-.composer-inner:focus-within { border-color: var(--accent); }
+.composer-inner:focus-within {
+  border-color: #969696;
+  box-shadow: 0 0 0 2px rgba(29, 155, 209, 0.15);
+}
 .composer-input {
   flex: 1;
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
   font-family: var(--sans);
   padding: 11px 14px;
   outline: none;
 }
 .composer-input::placeholder { color: var(--dim); }
 .btn-send {
-  background: var(--accent);
+  background: var(--green);
   border: none;
-  color: #1A0030;
-  font-family: var(--pixel);
-  font-size: 7px;
-  padding: 8px 12px;
-  margin: 6px;
-  border-radius: 3px;
+  color: #ffffff;
+  width: 30px;
+  height: 30px;
+  margin: 4px 6px 4px 0;
+  border-radius: 4px;
   cursor: pointer;
-  transition: opacity 0.1s;
-  white-space: nowrap;
+  transition: opacity 0.1s, background 0.1s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.btn-send:hover { opacity: 0.85; }
+.btn-send:hover { opacity: 0.9; }
+.btn-send svg { color: #ffffff; }
 
 /* ── Typing indicator ── */
 .typing-dots {
@@ -265,7 +401,9 @@ html, body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-/* ── Pet assistant (fixed bottom-right) ── */
+/* ── Pet assistant (fixed bottom-right) ──
+   The pet character + its panel are intentionally retro pixel-art and must
+   keep the dark-purple palette regardless of the surrounding chrome. */
 .pet-assistant {
   position: fixed;
   bottom: 82px;
@@ -275,6 +413,15 @@ html, body {
   align-items: flex-end;
   gap: 10px;
   z-index: 200;
+  /* Local pet-only palette — overrides the Slack-faithful root vars below. */
+  --pet-bg: #1A0030;
+  --pet-bg-dark: #0D0018;
+  --pet-border: #3A1055;
+  --pet-text: #E8D8FF;
+  --pet-dim: #8060AA;
+  --pet-accent: #C060FF;
+  --pet-yellow: #FFD040;
+  --pet-shadow: #5A0090;
 }
 
 .pet-bubble {
@@ -287,25 +434,75 @@ html, body {
   position: relative;
 }
 .pet-bubble:hover { transform: translateY(-3px); }
-.pet-bubble canvas { display: block; image-rendering: pixelated; }
+.pet-bubble canvas { display: block; image-rendering: pixelated; position: relative; z-index: 1; }
+
+/* Quiet mode: a pulsing glow under the pet signals an unread suggestion.
+   Click the pet to surface it. */
+.pet-bubble.has-suggestion::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 209, 102, 0.85) 0%, rgba(255, 209, 102, 0) 65%);
+  animation: pet-pulse-kf 1.4s ease-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.pet-bubble.has-suggestion::after {
+  content: "!";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent2, #FF8040);
+  color: #1A0030;
+  font-family: var(--pixel, 'Press Start 2P', monospace);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #1A0030;
+  z-index: 2;
+}
+@keyframes pet-pulse-kf {
+  0%   { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(1.6);  opacity: 0;   }
+}
 .pet-label {
   font-family: var(--pixel);
   font-size: 6px;
-  color: var(--accent);
+  color: var(--pet-accent);
   text-align: center;
   margin-top: 3px;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
-/* ── Suggestion notification ── */
+/* ── Suggestion notification (slack-pet-aligned card) ── */
 .pet-notification {
-  background: var(--sb);
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 1px var(--main), 6px 6px 0 #5A0090;
-  padding: 16px;
+  background: #ffffff;
+  border: 1px solid var(--pet-accent);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  padding: 14px 14px 12px;
   width: 300px;
   animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  color: var(--text);
+  font-family: var(--sans);
+  position: relative;
+}
+.pet-notification::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-right: 1px solid var(--pet-accent);
+  border-bottom: 1px solid var(--pet-accent);
+  transform: rotate(45deg);
 }
 .pet-notification.hidden { display: none; }
 
@@ -315,69 +512,83 @@ html, body {
 }
 
 .notif-header {
-  font-family: var(--pixel);
-  font-size: 7px;
-  color: var(--accent);
-  letter-spacing: 1px;
-  margin-bottom: 12px;
+  font-family: var(--pixelify);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
 }
 .notif-type-badge {
-  font-family: var(--pixel);
-  font-size: 6px;
-  color: var(--yellow);
-  border: 1px solid var(--yellow);
-  padding: 2px 6px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--pet-accent);
+  background: color-mix(in srgb, var(--pet-accent) 14%, transparent);
+  padding: 3px 8px;
+  border-radius: 999px;
   display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 .notif-label {
-  font-family: var(--pixel);
-  font-size: 6px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
   color: var(--dim);
-  letter-spacing: 1px;
-  margin-bottom: 5px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 .notif-original {
   font-size: 13px;
   color: var(--dim);
-  background: rgba(0,0,0,0.25);
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   padding: 7px 10px;
-  border-left: 2px solid var(--dark);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-style: italic;
 }
 .notif-suggestion {
   font-size: 13px;
   color: var(--text);
-  background: rgba(192,96,255,0.1);
-  padding: 7px 10px;
-  border-left: 2px solid var(--accent);
-  margin-bottom: 14px;
-  line-height: 1.6;
+  background: color-mix(in srgb, var(--pet-accent) 8%, #ffffff);
+  padding: 8px 10px;
+  border-left: 3px solid var(--pet-accent);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 12px;
+  line-height: 1.5;
 }
 .notif-actions { display: flex; gap: 8px; }
 .btn-use-suggestion {
   flex: 1;
-  background: var(--accent);
+  background: var(--pet-accent);
   border: none;
-  color: #1A0030;
-  font-family: var(--pixel);
-  font-size: 7px;
-  padding: 9px 6px;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: opacity 0.1s;
-  letter-spacing: 0.5px;
+  transition: opacity 0.1s, transform 0.05s;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
-.btn-use-suggestion:hover { opacity: 0.85; }
+.btn-use-suggestion:hover { opacity: 0.9; }
+.btn-use-suggestion:active { transform: translateY(1px); }
 .btn-dismiss-notif {
-  background: transparent;
+  background: #ffffff;
   border: 1px solid var(--border);
   color: var(--dim);
-  font-family: var(--pixel);
-  font-size: 7px;
-  padding: 9px 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: border-color 0.1s, color 0.1s;
+  transition: background 0.1s, color 0.1s;
 }
-.btn-dismiss-notif:hover { border-color: var(--accent); color: var(--accent); }
+.btn-dismiss-notif:hover { background: #f6f6f6; color: var(--text); }

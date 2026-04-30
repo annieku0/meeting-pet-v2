@@ -1,0 +1,97 @@
+/* ============================================================================
+   Synko Chrome Extension — Design Tokens
+   ----------------------------------------------------------------------------
+   Canonical palette + shadow recipes for the retro pixel-art surfaces
+   (popup, listen, feeding, reveal, profile, settings) AND the Slack-faithful
+   chrome surface (slack.html).
+
+   Each per-file CSS sheet still defines its own :root for now. Treat THIS file
+   as the source of truth — when modifying colors or shadows in any sheet,
+   update this file first, then propagate. To migrate a sheet to use these
+   tokens directly, link this file in the corresponding HTML before the page's
+   own stylesheet (the per-file :root will override unless you delete it).
+
+   Linking pattern:
+     <link rel="stylesheet" href="tokens.css" />
+     <link rel="stylesheet" href="popup.css" />
+   ============================================================================ */
+
+:root {
+  /* ── Retro pixel-art palette (popup, listen, feeding, reveal, profile, settings) */
+  --bg:        #0E0A1A;        /* Deep void background. popup.css uses #1A1025 — accept. */
+  --bg2:       #1A1228;
+  --bg3:       #241A38;
+  --border:    #3A2858;
+  --accent:    #C060FF;        /* Synko purple — the primary brand color. */
+  --accent2:   #FF8040;        /* Synko orange — secondary, used for highlights. */
+  --text:      #E8D8FF;
+  --dim:       #7860A8;        /* Mid-emphasis text. popup.css uses --text-dim — accept. */
+  --dark:      #3A2858;        /* Disabled / very dim. popup.css uses --text-dark — accept. */
+  --green:     #40E080;
+  --yellow:    #FFD040;
+  --red:       #FF4050;
+  --pixel:     'Press Start 2P', monospace;
+
+  /* ── Shadow recipes ──
+     The retro chunky drop-shadow is `Npx Npx 0 <color>`. Three sizes per
+     button state, four shadow colors per button hue.
+
+     Sizes:
+       --btn-shadow-rest:    Npx Npx 0 — rest position
+       --btn-shadow-hover:   (N+1)px (N+1)px 0 — when hovered (translates -1,-1)
+       --btn-shadow-active:  (N-1)px (N-1)px 0 — when pressed (translates +1,+1)
+
+     Shadow colors per hue: */
+  --shadow-purple:   #5A0090;  /* Use under purple (--accent) buttons */
+  --shadow-orange:   #802000;  /* Use under orange (--accent2) buttons */
+  --shadow-yellow:   #806000;  /* Use under yellow buttons (e.g. status, treats) */
+  --shadow-green:    #004020;  /* Use under green (--green) buttons */
+  --shadow-red:      #600000;  /* Use under red destructive buttons */
+
+  /* Default button: the retro "primary" with 3px purple drop. */
+  --btn-shadow:        3px 3px 0 var(--shadow-purple);
+  --btn-shadow-hover:  4px 4px 0 var(--shadow-purple);
+  --btn-shadow-active: 1px 1px 0 var(--shadow-purple);
+
+  /* ── Slack-faithful chrome (slack.html only) ──
+     These mirror slack-pet/app/globals.css so the two repos read as one
+     product. slack.css defines its own :root with these values inline; this
+     section is here so designers can compare both palettes in one place. */
+  --slack-sidebar:        #3f0e40;
+  --slack-sidebar-text:   rgba(255, 255, 255, 0.78);
+  --slack-sidebar-active: #1164a3;
+  --slack-text:           #1d1c1d;
+  --slack-text-dim:       #616061;
+  --slack-divider:        #e5e5e4;
+  --slack-message-hover:  #f8f8f8;
+  --slack-link:           #1264a3;
+  --slack-green:          #2bac76;
+  --slack-yellow:         #ecb22e;
+  --slack-red:            #e01e5a;
+  --sans-slack:           'Slack-Lato', 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ============================================================================
+   Reusable utility classes
+   ============================================================================ */
+
+/* Standard pixel-button look. Drop in `class="btn-token"` to inherit the
+   default purple-shadow recipe, then override --btn-shadow for hue variants. */
+.btn-token {
+  font-family: var(--pixel);
+  background: var(--accent);
+  color: #1A0030;
+  border: none;
+  padding: 10px 16px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.05s, box-shadow 0.05s;
+  font-size: 9px;
+}
+.btn-token:hover  { transform: translate(-1px, -1px); box-shadow: var(--btn-shadow-hover); }
+.btn-token:active { transform: translate( 1px,  1px); box-shadow: var(--btn-shadow-active); }
+
+.btn-token--orange { background: var(--accent2); --btn-shadow: 3px 3px 0 var(--shadow-orange); --btn-shadow-hover: 4px 4px 0 var(--shadow-orange); --btn-shadow-active: 1px 1px 0 var(--shadow-orange); }
+.btn-token--yellow { background: var(--yellow);  color: #2a1f00; --btn-shadow: 3px 3px 0 var(--shadow-yellow); --btn-shadow-hover: 4px 4px 0 var(--shadow-yellow); --btn-shadow-active: 1px 1px 0 var(--shadow-yellow); }
+.btn-token--green  { background: var(--green);   color: #002a14; --btn-shadow: 3px 3px 0 var(--shadow-green); --btn-shadow-hover: 4px 4px 0 var(--shadow-green); --btn-shadow-active: 1px 1px 0 var(--shadow-green); }
