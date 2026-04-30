@@ -5,66 +5,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Synko — Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="tokens.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0E0A1A; --bg2: #1A1228; --bg3: #241A38;
-      --border: #3A2858; --accent: #C060FF; --accent2: #FF8040;
-      --text: #E8D8FF; --dim: #7860A8; --dark: #3A2858;
-      --green: #40E080; --red: #FF4050;
-      --pixel: 'Press Start 2P', monospace;
+    html, body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans); font-size: 14px; line-height: 1.5;
+      min-height: 100vh; -webkit-font-smoothing: antialiased;
     }
-    html, body { background: var(--bg); color: var(--text); font-family: var(--pixel); font-size: 8px; min-height: 100vh; }
     .page { max-width: 560px; margin: 0 auto; padding: 32px 24px; }
-    .page-title { font-size: 16px; color: var(--accent); margin-bottom: 6px; text-shadow: 2px 2px 0 #5A0090; }
-    .page-sub { font-size: 8px; color: var(--dim); margin-bottom: 28px; line-height: 1.8; }
+    .page-title {
+      font-family: var(--pixelify);
+      font-size: 28px; font-weight: 700;
+      color: var(--text); margin-bottom: 4px; letter-spacing: 0.5px;
+    }
+    .page-sub {
+      font-size: 13px; color: var(--text-dim);
+      margin-bottom: 28px; line-height: 1.5;
+    }
     .section { margin-bottom: 28px; }
-    .section-title { font-size: 9px; color: var(--accent2); margin-bottom: 12px; letter-spacing: 1px; }
+    .section-title {
+      font-family: var(--pixelify);
+      font-size: 14px; font-weight: 600;
+      color: var(--accent2); margin-bottom: 12px; letter-spacing: 0.5px;
+    }
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .field label { font-size: 7px; color: var(--dim); }
+    .field label {
+      font-family: var(--pixelify);
+      font-size: 12px; font-weight: 600;
+      color: var(--text-dim); letter-spacing: 0.3px;
+    }
     .field input[type="text"], .field input[type="password"] {
-      background: var(--bg2); border: 2px solid var(--border);
-      color: var(--text); font-family: var(--pixel); font-size: 8px;
-      padding: 9px 10px; outline: none; width: 100%;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--sans); font-size: 14px;
+      padding: 10px 12px; outline: none; width: 100%;
+      border-radius: 6px;
+      transition: border-color 0.1s, box-shadow 0.1s;
     }
-    .field input:focus { border-color: var(--accent); }
-    .field-hint { font-size: 6px; color: var(--dark); line-height: 1.8; }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(63,14,64,0.18); }
+    .field-hint { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
     .btn-save {
-      background: var(--accent); color: #1A0030;
-      border: none; font-family: var(--pixel); font-size: 8px;
-      padding: 10px 16px; cursor: pointer; letter-spacing: 1px;
-      box-shadow: 3px 3px 0 #5A0090; width: 100%;
+      background: var(--accent); color: #ffffff;
+      border: none; font-family: var(--pixelify);
+      font-weight: 600; font-size: 15px;
+      padding: 11px 16px; cursor: pointer; letter-spacing: 0.3px;
+      width: 100%; border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      transition: background 0.1s, transform 0.05s;
     }
-    .btn-save:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #5A0090; }
-    .status { font-size: 8px; color: var(--green); min-height: 16px; margin-top: 8px; }
+    .btn-save:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-save:active { transform: translateY(0); }
+    .status { font-size: 13px; color: var(--green); min-height: 18px; margin-top: 8px; }
     .status.error { color: var(--red); }
     .info-box {
-      background: var(--bg2); border: 2px solid var(--bg3);
+      background: var(--bg2);
+      border: 1px solid var(--border);
       border-left: 4px solid var(--accent);
-      padding: 12px 14px; font-size: 7px; color: var(--dim);
-      line-height: 2; margin-bottom: 20px;
+      padding: 12px 14px; font-size: 13px; color: var(--text-dim);
+      line-height: 1.6; margin-bottom: 16px;
+      border-radius: 6px;
     }
     .treat-row {
-      display: grid; grid-template-columns: 32px 80px 1fr;
-      gap: 10px; align-items: center;
-      padding: 8px 12px; background: var(--bg2);
-      border: 2px solid var(--bg3); margin-bottom: 6px;
+      display: grid; grid-template-columns: 32px 100px 1fr;
+      gap: 12px; align-items: center;
+      padding: 10px 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
     }
-    .treat-emoji { font-size: 20px; }
-    .treat-name { font-size: 7px; color: var(--accent2); }
-    .treat-desc { font-size: 7px; color: var(--dim); line-height: 1.6; }
-    .divider { height: 2px; background: var(--bg3); margin: 20px 0; }
+    .treat-emoji { font-size: 22px; }
+    .treat-name {
+      font-family: var(--pixelify);
+      font-size: 14px; font-weight: 700;
+      color: var(--accent2);
+    }
+    .treat-desc {
+      font-size: 13px; color: var(--text-dim); line-height: 1.5;
+    }
+    .divider { height: 1px; background: var(--border); margin: 24px 0; border: none; }
     .trigger-mode-row {
       display: flex; align-items: flex-start; gap: 12px;
-      padding: 12px; background: var(--bg2);
-      border: 2px solid var(--bg3); margin-bottom: 8px;
+      padding: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
       cursor: pointer;
+      transition: border-color 0.1s, background 0.1s;
     }
-    .trigger-mode-row:has(input:checked) { border-color: var(--accent); }
-    .trigger-mode-row input { margin-top: 2px; accent-color: var(--accent); }
-    .mode-title { font-size: 8px; color: var(--accent2); margin-bottom: 4px; letter-spacing: 1px; }
-    .mode-sub { font-size: 7px; color: var(--dim); line-height: 1.7; }
+    .trigger-mode-row:hover { border-color: var(--text-dim); }
+    .trigger-mode-row:has(input:checked) { border-color: var(--accent); background: rgba(63,14,64,0.06); }
+    .trigger-mode-row input { margin-top: 4px; accent-color: var(--accent); }
+    .mode-title {
+      font-family: var(--pixelify);
+      font-size: 14px; font-weight: 700;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .mode-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
   </style>
 </head>
 <body>

@@ -57,20 +57,28 @@ for (let i = 0; i < PETS.length; i++) _getPetImage(i);
  */
 function renderPet(ctx, petIndex, x, y, pixelSize = 3) {
   const img = _getPetImage(petIndex);
-  const drawSize = 16 * pixelSize;
+  const boxSize = 16 * pixelSize;
   // Pixel art: keep the crisp pixel boundaries when scaling.
   if ("imageSmoothingEnabled" in ctx) ctx.imageSmoothingEnabled = false;
 
   const draw = () => {
     if ("imageSmoothingEnabled" in ctx) ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, x, y, drawSize, drawSize);
+    // Preserve aspect ratio (letterbox into the target square) — the source
+    // PNGs are not all 1:1 (e.g. dog-brown is 1024×832, baby-capybara 706×898),
+    // so a forced-square draw squashes them. Compute a contain-fit instead.
+    const nw = img.naturalWidth || 1;
+    const nh = img.naturalHeight || 1;
+    const scale = Math.min(boxSize / nw, boxSize / nh);
+    const drawW = nw * scale;
+    const drawH = nh * scale;
+    const dx = x + (boxSize - drawW) / 2;
+    const dy = y + (boxSize - drawH) / 2;
+    ctx.drawImage(img, dx, dy, drawW, drawH);
   };
 
   if (img.complete && img.naturalWidth > 0) {
     draw();
   } else {
-    // First draw before load completes — paint when ready, then again on
-    // any future load events (cheap; browsers de-dupe identical handlers).
     img.addEventListener("load", draw, { once: true });
   }
 }

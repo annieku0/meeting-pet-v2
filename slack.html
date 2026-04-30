@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="tokens.css" />
-  <link rel="stylesheet" href="slack.css?v=5" />
+  <link rel="stylesheet" href="slack.css?v=13" />
 </head>
 <body>
 
@@ -44,12 +44,15 @@
       <div class="sidebar-section-label">
         <span class="caret">▾</span> Channels
       </div>
-      <div class="channel-item active" data-channel="general">
+      <div class="channel-item active" data-channel="proj-pomegranate">
+        <span class="ch-hash">#</span> proj-pomegranate
+        <span class="unread"></span>
+      </div>
+      <div class="channel-item" data-channel="general">
         <span class="ch-hash">#</span> general
       </div>
       <div class="channel-item" data-channel="marketing">
         <span class="ch-hash">#</span> marketing
-        <span class="unread"></span>
       </div>
       <div class="channel-item" data-channel="design">
         <span class="ch-hash">#</span> design
@@ -62,6 +65,11 @@
     <div class="sidebar-section">
       <div class="sidebar-section-label">
         <span class="caret">▾</span> Direct messages
+      </div>
+      <div class="channel-item" data-channel="dm-synko" id="dm-synko-row">
+        <div class="online-dot"></div>
+        <span id="dm-synko-label">Synko</span>
+        <span class="pet-dot" aria-label="pet"></span>
       </div>
       <div class="channel-item" data-channel="dm-lesley">
         <div class="online-dot"></div>
@@ -76,6 +84,8 @@
         Alex
       </div>
     </div>
+
+    <button class="sidebar-back" id="btn-back-popup" title="Back to Synko home">↺ Back to Synko</button>
   </aside>
 
   <!-- ── Main area ── -->
@@ -83,34 +93,114 @@
     <div class="channel-header">
       <div class="ch-header-left">
         <button class="ch-header-title">
-          <span class="ch-header-name" id="channel-header-name"># general</span>
+          <span class="ch-header-name" id="channel-header-name"># proj-pomegranate</span>
           <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M5 8l5 5 5-5z"/></svg>
         </button>
-        <p class="ch-header-topic" id="channel-header-topic">Team announcements and general chat</p>
+        <p class="ch-header-topic" id="channel-header-topic">Q3 launch — pet lives here</p>
       </div>
       <div class="ch-header-actions">
-        <button title="Members"><svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden><circle cx="7" cy="7" r="3"/><circle cx="14" cy="8" r="2.5"/><path d="M2 17c0-3 2.5-5 5-5s5 2 5 5zM12 17c0-2.4 1.5-4 4-4s2 1.6 2 4z"/></svg><span>3</span></button>
-        <button title="Pinned"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden><path d="M14 3l3 3-4 1-2 5h-1L7 8H5l1-2 5-2 1-1z"/><path d="M9 11l-4 5"/></svg></button>
+        <button title="Members"><svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden><circle cx="7" cy="7" r="3"/><circle cx="14" cy="8" r="2.5"/><path d="M2 17c0-3 2.5-5 5-5s5 2 5 5zM12 17c0-2.4 1.5-4 4-4s2 1.6 2 4z"/></svg><span>4</span></button>
         <button title="Search"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg></button>
-        <button title="Channel info"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.5v.5"/></svg></button>
       </div>
     </div>
 
     <div class="messages-area" id="messages-area"></div>
 
     <div class="message-composer">
+      <!-- Slash command autocomplete -->
+      <div class="slash-dropdown hidden" id="slash-dropdown">
+        <div class="slash-dropdown-header">Commands</div>
+        <ul id="slash-dropdown-list"></ul>
+      </div>
       <div class="composer-inner">
         <input class="composer-input" id="composer-input"
-               placeholder="Message #general" autocomplete="off" />
+               placeholder="Message #proj-pomegranate · try /help" autocomplete="off" />
         <button class="btn-send" id="btn-send" aria-label="Send">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M3 3l14 7-14 7v-5l9-2-9-2z"/></svg>
         </button>
       </div>
     </div>
   </div>
+
+  <!-- ── Pet Home (right rail) ── -->
+  <aside class="pet-home" id="pet-home">
+    <div class="pet-home-header">
+      <div class="pet-home-title" id="pet-home-title">Pet home</div>
+      <button class="pet-home-collapse" id="pet-home-collapse" title="Collapse">‹</button>
+    </div>
+
+    <!-- Pet stage + drop zone -->
+    <div class="pet-home-stage" id="pet-home-stage">
+      <div class="pet-home-empty" id="pet-home-empty">
+        <div class="pet-home-empty-egg">🥚</div>
+        <div>No pet yet.</div>
+        <div class="pet-home-empty-sub">Type <code>/init</code> in any channel to hatch one.</div>
+      </div>
+      <div class="pet-home-pet hidden" id="pet-home-pet">
+        <canvas id="pet-home-canvas" width="96" height="96"></canvas>
+        <div class="pet-home-pet-name" id="pet-home-pet-name"></div>
+        <div class="pet-home-drag-hint hidden" id="pet-home-drag-hint">drop a treat here to feed</div>
+      </div>
+    </div>
+
+    <!-- Health bar -->
+    <div class="pet-home-section pet-home-health" id="pet-home-health-section">
+      <div class="pet-home-section-row">
+        <span class="pet-home-section-title">Health</span>
+        <span class="pet-home-section-meta" id="pet-home-health-label">62 / 100</span>
+      </div>
+      <div class="pet-home-health-track">
+        <div class="pet-home-health-fill" id="pet-home-health-fill"></div>
+      </div>
+    </div>
+
+    <!-- Treats -->
+    <div class="pet-home-section">
+      <div class="pet-home-section-row">
+        <span class="pet-home-section-title">Treats</span>
+        <span class="pet-home-section-meta" id="pet-home-treats-count">0</span>
+      </div>
+      <div class="pet-home-treats" id="pet-home-treats">
+        <div class="pet-home-treats-empty">
+          No treats yet. Start a live meeting from the Synko popup to earn some.
+        </div>
+      </div>
+      <div class="pet-home-treats-hint hidden" id="pet-home-treats-hint">
+        Drag a treat onto the pet, or click Feed.
+      </div>
+    </div>
+
+    <!-- Pet the pet -->
+    <div class="pet-home-section pet-home-pet-the-pet">
+      <div class="pet-home-section-title">Pet the pet · anonymous</div>
+      <p class="pet-home-pet-the-pet-hint">
+        A kind word about a teammate, or a quiet note about how communication is going. Stays anonymous.
+      </p>
+      <div class="pet-home-kind-tabs">
+        <button class="pet-home-kind-btn active" data-kind="compliment">Compliment</button>
+        <button class="pet-home-kind-btn" data-kind="feedback">Feedback</button>
+      </div>
+      <textarea
+        id="pet-home-pet-the-pet-text"
+        class="pet-home-textarea"
+        rows="3"
+        placeholder="e.g. Mary's eval write-up made the trade-offs really clear."
+      ></textarea>
+      <button class="pet-home-send" id="pet-home-pet-the-pet-send" disabled>Send</button>
+    </div>
+  </aside>
+
+
 </div>
 
-<!-- ── Pet assistant ── -->
+<!-- Floating handle to re-open pet-home when fully hidden. Lives outside the
+     workspace flex layout so it doesn't take space when not needed. -->
+<button class="pet-home-handle hidden" id="pet-home-expand" title="Open pet home">
+  <span class="pet-home-handle-arrow">‹</span>
+  <canvas id="pet-home-collapsed-canvas" width="32" height="32"></canvas>
+</button>
+
+<!-- ── Pet assistant (live message coach) ── -->
 <div class="pet-assistant" id="pet-assistant">
   <!-- Notification panel (above the pet) -->
   <div class="pet-notification hidden" id="pet-notification">
@@ -127,13 +217,24 @@
   </div>
 
   <!-- Pet sprite -->
-  <div class="pet-bubble" id="pet-bubble" title="Your collaboration pet">
+  <div class="pet-bubble hidden" id="pet-bubble" title="Your collaboration pet">
     <canvas id="slack-pet-canvas" width="48" height="48"></canvas>
     <div class="pet-label" id="pet-label"></div>
   </div>
 </div>
 
-<script src="pets.js?v=18"></script>
-<script src="slack.js?v=8"></script>
+<!-- ── Modal overlay (for /init, etc.) ── -->
+<div class="modal-overlay hidden" id="modal-overlay" aria-hidden="true">
+  <div class="modal-card" id="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+    <div class="modal-header" id="modal-header">
+      <div class="modal-title" id="modal-title">Hatch your project's pet</div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script src="pets.js?v=19"></script>
+<script src="slack.js?v=16"></script>
 </body>
 </html>
