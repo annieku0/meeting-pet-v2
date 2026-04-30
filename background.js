@@ -11,7 +11,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'OPEN_REVEAL') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('reveal.html') });
+    // Legacy: post-meeting reveal page is no longer used. Route to slack instead.
+    chrome.tabs.create({ url: chrome.runtime.getURL('slack.html') });
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  if (message.type === 'OPEN_SLACK') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('slack.html') });
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  if (message.type === 'OPEN_POPUP') {
+    // Closing the slack tab and re-opening the popup is what the user expects.
+    chrome.action.openPopup?.();
     sendResponse({ ok: true });
     return true;
   }

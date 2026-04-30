@@ -22,7 +22,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["reveal.html", "settings.html", "feeding.html", "profile.html", "listen.html"],
+      "resources": ["reveal.html", "settings.html", "feeding.html", "profile.html", "listen.html", "sprites/*.png", "sprites/*.svg"],
       "matches": ["<all_urls>"]
     }
   ]

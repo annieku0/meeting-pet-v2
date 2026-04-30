@@ -3,49 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <title>Synko — Reset</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="tokens.css" />
   <style>
     body {
-      background: #0E0A1A; color: #E8D8FF;
-      font-family: 'Press Start 2P', monospace; font-size: 8px;
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans); font-size: 14px;
       display: flex; align-items: center; justify-content: center;
       min-height: 100vh; margin: 0;
+      -webkit-font-smoothing: antialiased;
     }
     .box {
-      background: #1A1228; border: 3px solid #3A2858;
-      padding: 40px; text-align: center;
-      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
       max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
-    .title { font-size: 14px; color: #C060FF; text-shadow: 2px 2px 0 #5A0090; }
-    .sub   { font-size: 7px; color: #7860A8; line-height: 2; }
+    .title {
+      font-family: var(--pixelify);
+      font-size: 24px; font-weight: 700;
+      color: var(--text); letter-spacing: 0.5px;
+    }
+    .sub {
+      font-size: 14px; color: var(--text-dim); line-height: 1.5;
+    }
     .btn {
-      background: #C060FF; color: #1A0030; border: none;
-      font-family: 'Press Start 2P', monospace; font-size: 9px;
-      padding: 12px 20px; cursor: pointer;
-      box-shadow: 3px 3px 0 #5A0090; width: 100%;
+      background: var(--red); color: #ffffff; border: none;
+      font-family: var(--pixelify); font-weight: 700; font-size: 15px;
+      padding: 12px 20px; cursor: pointer; border-radius: 6px;
+      width: 100%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      transition: background 0.1s, transform 0.05s;
     }
-    .btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #5A0090; }
+    .btn:hover { filter: brightness(0.95); transform: translateY(-1px); }
     .btn-cancel {
-      background: transparent; color: #7860A8;
-      border: 2px solid #3A2858; font-family: 'Press Start 2P', monospace;
-      font-size: 8px; padding: 10px; cursor: pointer; width: 100%;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border);
+      font-family: var(--pixelify); font-weight: 500;
+      font-size: 14px; padding: 11px; cursor: pointer; width: 100%;
+      border-radius: 6px;
+      transition: background 0.1s, border-color 0.1s;
     }
-    .btn-cancel:hover { color: #E8D8FF; border-color: #7860A8; }
-    .done { font-size: 8px; color: #40E080; display: none; }
+    .btn-cancel:hover { background: var(--bg2); border-color: var(--text-dim); }
+    .done { font-size: 14px; color: var(--green); font-weight: 600; display: none; }
   </style>
 </head>
 <body>
   <div class="box">
-    <div style="font-size:40px">🐾</div>
-    <div class="title">RESET</div>
+    <div style="font-size:48px">🐾</div>
+    <div class="title">Reset Synko</div>
     <div class="sub">
-      This will clear all pets, sessions,<br>
-      and meeting data so you can<br>
-      start fresh from the beginning.
+      This will clear all pets, sessions, and meeting data so you can start fresh from the beginning.
     </div>
-    <button class="btn" id="btn-reset">▸ RESET EVERYTHING</button>
-    <button class="btn-cancel" onclick="history.back()">← CANCEL</button>
+    <button class="btn" id="btn-reset">Reset Everything</button>
+    <button class="btn-cancel" onclick="history.back()">← Cancel</button>
     <div class="done" id="done-msg">✓ Done! You can close this tab.</div>
   </div>
   <script>

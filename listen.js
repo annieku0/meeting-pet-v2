@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Synko — Live Listener
-// Pipeline: getDisplayMedia (tab audio) → Deepgram WebSocket → transcript
+// Synko — Live Listener (Granola-style)
+// Pipeline: microphone (your voice) + optional tab audio (other speakers)
+//           → mixed PCM → Deepgram WebSocket → transcript
 //           → buffer chunks → Claude analysis → treats
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,8 @@ const Store = {
 let session       = null;
 let deepgramKey   = null;
 let anthropicKey  = null;
-let audioStream   = null;
+let micStream     = null;   // microphone (your voice)
+let tabStream     = null;   // optional tab audio (other speakers)
 let audioContext  = null;
 let deepgramWs    = null;
 let timerInterval = null;
@@ -38,6 +40,12 @@ let chunksAnalyzed     = 0;
 let totalTreats        = 0;
 const ANALYSIS_INTERVAL_MS = 45_000; // analyze every 45s
 let analysisTimer = null;
+
+// ── Diagnostics ───────────────────────────────────────────────────────────────
+let bytesSentToDg     = 0;
+let dgMessagesReceived = 0;
+let micPeakLevel      = 0;
+function diag(label, ...args) { console.log(`[Synko] ${label}`, ...args); }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
@@ -89,28 +97,45 @@ function checkKeys() {
 async function startListening() {
   const btn = document.getElementById('btn-start-listen');
   const err = document.getElementById('setup-error');
+  const includeTab = document.getElementById('opt-include-tab')?.checked;
   btn.disabled = true;
-  btn.textContent = 'Requesting audio...';
+  btn.textContent = 'Requesting microphone...';
   err.textContent = '';
 
   try {
-    // Request tab/screen audio capture
-    audioStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,   // Chrome requires video:true even if we only use audio
+    // 1) Always capture the microphone (your voice).
+    diag('Requesting microphone...');
+    micStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
         sampleRate: 16000,
+        channelCount: 1,
       },
+      video: false,
     });
+    const micTrack = micStream.getAudioTracks()[0];
+    diag('Mic acquired:', micTrack?.label || '(unknown device)', micTrack?.getSettings?.());
 
-    // Stop the video track immediately — we only need audio
-    audioStream.getVideoTracks().forEach(t => t.stop());
-
-    // Check we actually got an audio track
-    const audioTracks = audioStream.getAudioTracks();
-    if (audioTracks.length === 0) {
-      throw new Error('No audio track — make sure to check "Share tab audio" when sharing.');
+    // 2) Optionally also capture tab audio (everyone else's voices on Zoom/Meet).
+    if (includeTab) {
+      btn.textContent = 'Pick the meeting tab...';
+      try {
+        tabStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true, // Chrome requires video:true even if we only use audio
+          audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000 },
+        });
+        // We don't need video — stop those tracks immediately.
+        tabStream.getVideoTracks().forEach(t => t.stop());
+        if (tabStream.getAudioTracks().length === 0) {
+          err.textContent = 'No tab audio — did you check "Share tab audio"? Continuing with mic only.';
+          tabStream = null;
+        }
+      } catch (e) {
+        // User cancelled the tab picker — fall back to mic-only.
+        tabStream = null;
+      }
     }
 
     // Switch to listening screen
@@ -132,7 +157,7 @@ async function startListening() {
     btn.disabled = false;
     btn.textContent = '🎙 START LISTENING';
     if (e.name === 'NotAllowedError') {
-      err.textContent = 'Permission denied. Please allow screen/tab sharing.';
+      err.textContent = 'Microphone permission denied. Allow it in your browser/system settings.';
     } else {
       err.textContent = e.message || 'Could not start audio capture.';
     }
@@ -141,9 +166,16 @@ async function startListening() {
 
 // ── Deepgram real-time pipeline ───────────────────────────────────────────────
 async function startDeepgramPipeline() {
-  // Set up AudioContext to process the stream
+  // Set up AudioContext and mix mic + tab audio (if present) into one source.
   audioContext = new AudioContext({ sampleRate: 16000 });
-  const source = audioContext.createMediaStreamSource(audioStream);
+  const merger = audioContext.createGain();
+
+  if (micStream) {
+    audioContext.createMediaStreamSource(micStream).connect(merger);
+  }
+  if (tabStream) {
+    audioContext.createMediaStreamSource(tabStream).connect(merger);
+  }
 
   // ScriptProcessor to convert float32 → int16 PCM and send to Deepgram
   const bufferSize = 4096;
@@ -153,41 +185,73 @@ async function startDeepgramPipeline() {
   // model=nova-2: best accuracy | diarize=true: speaker labels | punctuate=true
   const wsUrl = `wss://api.deepgram.com/v1/listen?` +
     `model=nova-2&language=en&punctuate=true&diarize=true` +
-    `&interim_results=true&utterance_end_ms=1500&vad_events=true`;
+    `&interim_results=true&utterance_end_ms=1500&vad_events=true` +
+    `&encoding=linear16&sample_rate=16000`;
 
+  diag('Opening Deepgram WebSocket:', wsUrl);
   deepgramWs = new WebSocket(wsUrl, ['token', deepgramKey]);
   deepgramWs.binaryType = 'arraybuffer';
 
+  let firstChunkLogged = false;
   deepgramWs.onopen = () => {
+    diag('Deepgram WS opened ✓');
     setStatus('LISTENING');
     // Start sending audio
     processor.onaudioprocess = (e) => {
       if (deepgramWs.readyState !== WebSocket.OPEN) return;
       const float32 = e.inputBuffer.getChannelData(0);
-      const int16   = float32ToInt16(float32);
+      // Track peak level for the on-screen meter
+      let peak = 0;
+      for (let i = 0; i < float32.length; i++) {
+        const v = Math.abs(float32[i]);
+        if (v > peak) peak = v;
+      }
+      micPeakLevel = peak;
+      const int16 = float32ToInt16(float32);
       deepgramWs.send(int16.buffer);
+      bytesSentToDg += int16.byteLength;
+      if (!firstChunkLogged) {
+        firstChunkLogged = true;
+        diag('First audio chunk sent to Deepgram ✓', int16.byteLength, 'bytes');
+      }
     };
-    source.connect(processor);
+    merger.connect(processor);
     processor.connect(audioContext.destination);
   };
 
   deepgramWs.onmessage = (event) => {
+    dgMessagesReceived++;
+    if (dgMessagesReceived === 1) diag('First Deepgram message received ✓');
     try {
       const msg = JSON.parse(event.data);
       handleDeepgramMessage(msg);
-    } catch {}
+    } catch (e) {
+      diag('Could not parse Deepgram message:', event.data);
+    }
   };
 
-  deepgramWs.onerror = (e) => setStatus('ERROR — check Deepgram key');
-  deepgramWs.onclose = () => {
-    if (audioContext) setStatus('DISCONNECTED');
+  deepgramWs.onerror = (e) => {
+    console.error('[Synko] Deepgram WS error', e);
+    setStatus('WS ERROR — see console');
+  };
+  deepgramWs.onclose = (e) => {
+    diag('Deepgram WS closed', { code: e.code, reason: e.reason, wasClean: e.wasClean });
+    if (e.code === 1008 || e.code === 4001 || e.code === 4008) {
+      setStatus('AUTH ERROR — bad Deepgram key');
+    } else if (e.code === 1006) {
+      setStatus('CONNECTION DROPPED');
+    } else if (audioContext) {
+      setStatus(`DISCONNECTED (${e.code})`);
+    }
   };
 
-  // Handle stream end
-  audioStream.getAudioTracks()[0].addEventListener('ended', () => {
-    setStatus('TAB CLOSED');
-    stopAudio();
-  });
+  // If the user closes the shared tab mid-meeting, surface it but keep mic going.
+  if (tabStream) {
+    tabStream.getAudioTracks()[0].addEventListener('ended', () => {
+      tabStream = null;
+      setStatus('TAB CLOSED — MIC ONLY');
+    });
+  }
 }
 
 function float32ToInt16(float32) {
@@ -327,12 +391,18 @@ function showInterim(text, speaker) {
 async function flushAndAnalyze() {
   const chunk = transcriptBuffer.trim();
   transcriptBuffer = '';
-  if (!chunk || chunk.split(/\s+/).length < 10) return;
+  if (!chunk || chunk.split(/\s+/).length < 10) {
+    diag('Skip analysis — chunk too short', { words: chunk.split(/\s+/).length });
+    return;
+  }
 
+  diag('Analyzing chunk:', chunk.split(/\s+/).length, 'words', anthropicKey ? '(Claude)' : '(local)');
   try {
     const result = anthropicKey
       ? await analyzeWithClaude(chunk, anthropicKey)
       : analyzeLocally(chunk);
+
+    diag('Analysis result:', result);
 
     const newTreats = result.treats || [];
     const newMoments = result.moments || [];
@@ -382,9 +452,10 @@ Be conservative — only award treats for clear, genuine instances.`;
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-6',
+      model: 'claude-opus-4-7',
       max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: 'user', content: `Analyze:\n\n${transcript}` }],
@@ -455,8 +526,29 @@ function showListenScreen() {
 
 function initListenScreen() {
   document.getElementById('listen-meeting-name').textContent = (session?.meetingTitle || 'Meeting').toUpperCase();
-  document.getElementById('listen-source').textContent = deepgramKey ? 'tab audio · deepgram' : 'microphone · speech api';
+  const sources = [];
+  if (micStream) sources.push('mic');
+  if (tabStream) sources.push('tab audio');
+  const engine = deepgramKey ? 'deepgram' : 'speech api';
+  document.getElementById('listen-source').textContent = `${sources.join(' + ') || 'mic'} · ${engine}`;
   document.getElementById('listen-pet-name').textContent = session?.petName || 'Your Pet';
+
+  // Diagnostics render loop — updates 10x/sec while a session is active
+  const diagBar  = document.getElementById('diag-mic-bar');
+  const diagPct  = document.getElementById('diag-mic-pct');
+  const diagWs   = document.getElementById('diag-ws-state');
+  const diagBytes = document.getElementById('diag-bytes');
+  const diagMsgs  = document.getElementById('diag-msgs');
+  const wsStateName = (s) => ({0:'CONNECTING',1:'OPEN',2:'CLOSING',3:'CLOSED'}[s] ?? '—');
+  setInterval(() => {
+    if (!audioContext) return;
+    const pct = Math.min(100, Math.round(micPeakLevel * 200)); // *200 to feel responsive
+    if (diagBar) diagBar.style.width = pct + '%';
+    if (diagPct) diagPct.textContent = pct + '%';
+    if (diagWs) diagWs.textContent = deepgramWs ? wsStateName(deepgramWs.readyState) : 'NONE';
+    if (diagBytes) diagBytes.textContent = bytesSentToDg.toLocaleString();
+    if (diagMsgs)  diagMsgs.textContent  = String(dgMessagesReceived);
+  }, 100);
 
   // Pet animation
   const canvas = document.getElementById('listen-pet-canvas');
@@ -480,7 +572,8 @@ function initListenScreen() {
 function stopAudio() {
   if (deepgramWs) { deepgramWs.close(); deepgramWs = null; }
   if (audioContext) { audioContext.close(); audioContext = null; }
-  if (audioStream) { audioStream.getTracks().forEach(t => t.stop()); audioStream = null; }
+  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  if (tabStream) { tabStream.getTracks().forEach(t => t.stop()); tabStream = null; }
   clearInterval(analysisTimer);
 }
 
@@ -499,11 +592,62 @@ async function endMeeting() {
   s.endTime  = Date.now();
   await Store.set({ currentSession: s });
 
-  // Navigate to reveal
+  // Hand off to Slack as a /zoom-style report (treats granted to the initiated pet)
+  await handoffToSlack(s);
+
   if (typeof chrome !== 'undefined' && chrome.runtime) {
-    chrome.runtime.sendMessage({ type: 'OPEN_REVEAL' });
+    chrome.runtime.sendMessage({ type: 'OPEN_SLACK' });
     window.close();
   } else {
-    window.location.href = 'reveal.html';
+    window.location.href = 'slack.html';
   }
+}
+
+// Same handoff as popup.js — kept duplicated so listen.html doesn't need to
+// import popup.js. Writes a `mp_pending_zoom_report` payload that slack.js
+// picks up on next load and grants treats from.
+async function handoffToSlack(sess) {
+  if (!sess) return;
+  const TR = {
+    apple:     { emoji: '🍎', name: 'Apple',     meaning: 'Clarifying question' },
+    cake:      { emoji: '🎂', name: 'Cake',      meaning: 'Deadline named' },
+    cookie:    { emoji: '🍪', name: 'Cookie',    meaning: 'Process question' },
+    carrot:    { emoji: '🥕', name: 'Carrot',    meaning: 'Jargon translated' },
+    star:      { emoji: '⭐', name: 'Star',      meaning: 'Action item defined' },
+    candy:     { emoji: '🍬', name: 'Candy',     meaning: 'Cross-team alignment' },
+    blueberry: { emoji: '🫐', name: 'Blueberry', meaning: 'Follow-up scheduled' },
+    gem:       { emoji: '💎', name: 'Gem',       meaning: 'Problem resolved' },
+  };
+  const treatsCounted = (sess.treats || []).reduce((acc, id) => { acc[id] = (acc[id] || 0) + 1; return acc; }, {});
+  const grantedTreats = (sess.treats || []).map((tid, i) => {
+    const t = TR[tid] || { emoji: '✨', name: tid, meaning: '' };
+    return {
+      id: `t-${Date.now()}-${i}`,
+      treatId: tid,
+      emoji: t.emoji,
+      name: t.name,
+      meaning: t.meaning,
+      source: sess.meetingTitle || 'Live meeting',
+    };
+  });
+  const TREAT_ORDER = ['apple','cake','cookie','carrot','star','candy','blueberry','gem'];
+  const bullets = [];
+  TREAT_ORDER.forEach(tid => {
+    const count = treatsCounted[tid] || 0;
+    if (count === 0) return;
+    const t = TR[tid];
+    bullets.push(`${t.emoji} <b>${t.name}</b> ×${count} — ${t.meaning}`);
+  });
+  if (bullets.length === 0) {
+    bullets.push("No new treat moments this round — but every meeting still teaches the pet your team's rhythm.");
+  }
+
+  // Slack owns the grant — applying it here would double-credit the pet.
+  const report = {
+    title: sess.meetingTitle || 'Live meeting',
+    bullets,
+    treats: grantedTreats,
+    durationMs: (sess.endTime || Date.now()) - (sess.startTime || Date.now()),
+  };
+  localStorage.setItem('mp_pending_zoom_report', JSON.stringify(report));
 }

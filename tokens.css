@@ -1,0 +1,89 @@
+/* ============================================================================
+   Synko Chrome Extension — Design Tokens (LIGHT, Slack-pet-aligned)
+   ----------------------------------------------------------------------------
+   The extension surfaces (popup, listen, settings, etc.) now share the same
+   light palette as the Slack-side pet-home panel — white background, dark
+   text, Pixelify Sans for headings, Lato for body. The pet sprites and a few
+   accent colors carry the retro warmth.
+
+   Linking pattern:
+     <link rel="stylesheet" href="tokens.css" />
+     <link rel="stylesheet" href="popup.css" />
+   ============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+
+:root {
+  /* ── Surface palette (matches slack pet-home) ── */
+  --bg:        #ffffff;
+  --bg2:       #f8f8f8;
+  --bg3:       #f1f1f0;
+  --border:    #e5e5e4;
+  --text:      #1d1c1d;
+  --text-dim:  #616061;
+  --text-dark: #b8b6b4;
+  --dim:       #616061;          /* alias for files that use --dim */
+  --dark:      #b8b6b4;          /* alias for files that use --dark */
+
+  /* ── Accents — keep pet warmth, but readable on white ── */
+  --accent:    #3f0e40;          /* Slack sidebar purple — primary actions */
+  --accent-hover: #2a0a2c;       /* darker purple for button hover */
+  --accent2:   #FF8040;          /* retro orange — pet signals */
+  --green:     #2bac76;
+  --yellow:    #ecb22e;
+  --red:       #e01e5a;
+  --purple:    #7C3AED;          /* Synko legacy brand purple */
+
+  /* ── Fonts ── */
+  --pixelify:  'Pixelify Sans', system-ui, monospace;
+  --pixel:     'Pixelify Sans', system-ui, monospace; /* alias for legacy */
+  --sans:      'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* ── Shadow recipes (kept for retro buttons) ── */
+  --shadow-blue:    rgba(63, 14, 64, 0.35);
+  --shadow-orange:  rgba(255, 128, 64, 0.35);
+  --shadow-yellow:  rgba(236, 178, 46, 0.4);
+  --shadow-green:   rgba(43, 172, 118, 0.35);
+  --shadow-red:     rgba(224, 30, 90, 0.35);
+
+  --btn-shadow:        2px 2px 0 var(--shadow-blue);
+  --btn-shadow-hover:  3px 3px 0 var(--shadow-blue);
+  --btn-shadow-active: 0 0 0 var(--shadow-blue);
+
+  /* ── Slack-faithful chrome (slack.html only — kept for reference) ── */
+  --slack-sidebar:        #3f0e40;
+  --slack-sidebar-text:   rgba(255, 255, 255, 0.78);
+  --slack-text:           #1d1c1d;
+  --slack-text-dim:       #616061;
+  --slack-divider:        #e5e5e4;
+  --sans-slack:           'Slack-Lato', 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ============================================================================
+   Reusable utility classes
+   ============================================================================ */
+
+.btn-token {
+  font-family: var(--pixelify);
+  font-weight: 600;
+  background: var(--accent);
+  color: #ffffff;
+  border: 2px solid var(--accent);
+  padding: 10px 18px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+  border-radius: 4px;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+.btn-token:hover  { transform: translate(-1px, -1px); box-shadow: var(--btn-shadow-hover); }
+.btn-token:active { transform: translate( 1px,  1px); box-shadow: var(--btn-shadow-active); }
+.btn-token:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-token--orange { background: var(--accent2); border-color: var(--accent2); color: #2a1500; --btn-shadow: 2px 2px 0 var(--shadow-orange); --btn-shadow-hover: 3px 3px 0 var(--shadow-orange); --btn-shadow-active: 0 0 0 var(--shadow-orange); }
+.btn-token--yellow { background: var(--yellow);  border-color: var(--yellow);  color: #2a1f00; --btn-shadow: 2px 2px 0 var(--shadow-yellow); --btn-shadow-hover: 3px 3px 0 var(--shadow-yellow); --btn-shadow-active: 0 0 0 var(--shadow-yellow); }
+.btn-token--green  { background: var(--green);   border-color: var(--green);   color: #ffffff; --btn-shadow: 2px 2px 0 var(--shadow-green); --btn-shadow-hover: 3px 3px 0 var(--shadow-green); --btn-shadow-active: 0 0 0 var(--shadow-green); }
+.btn-token--ghost  { background: var(--bg); border-color: var(--border); color: var(--text); --btn-shadow: none; --btn-shadow-hover: none; --btn-shadow-active: none; }
+.btn-token--ghost:hover { background: var(--bg2); }

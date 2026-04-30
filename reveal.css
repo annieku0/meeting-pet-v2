@@ -1,25 +1,8 @@
-/* Synko — Reveal Page Styles */
-
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* Synko — Reveal Page Styles (light, Slack-pet-aligned) */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg:       #0E0A1A;
-  --bg2:      #1A1228;
-  --bg3:      #241A38;
-  --border:   #3A2858;
-  --accent:   #C060FF;
-  --accent2:  #FF8040;
-  --text:     #E8D8FF;
-  --dim:      #7860A8;
-  --dark:     #3A2858;
-  --green:    #40E080;
-  --yellow:   #FFD040;
-  --pixel:    'Press Start 2P', monospace;
-}
-
-html { background: var(--bg); color: var(--text); font-family: var(--pixel); }
+html { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 body { min-height: 100vh; }
 
 /* ── Curtain ── */
@@ -42,7 +25,7 @@ body { min-height: 100vh; }
 
 .curtain-title {
   font-size: 20px; color: var(--accent);
-  text-shadow: 3px 3px 0 #5A0090;
+  text-shadow: none;
   letter-spacing: 2px;
 }
 .curtain-sub { font-size: 10px; color: var(--dim); }
@@ -126,7 +109,7 @@ body { min-height: 100vh; }
   font-size: 14px;
   color: var(--accent2);
   letter-spacing: 2px;
-  text-shadow: 2px 2px 0 #802000;
+  text-shadow: none;
 }
 
 /* ── Treat summary bar ── */
@@ -144,7 +127,7 @@ body { min-height: 100vh; }
 .summary-label { font-size: 9px; color: var(--dim); }
 .total-treats-count {
   font-size: 28px; color: var(--accent);
-  text-shadow: 3px 3px 0 #5A0090;
+  text-shadow: none;
   min-width: 40px; text-align: center;
   animation: countPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -194,7 +177,7 @@ body { min-height: 100vh; }
 .treat-chip .treat-count {
   font-size: 10px;
   color: var(--yellow);
-  text-shadow: 1px 1px 0 #806000;
+  text-shadow: none;
 }
 .treat-chip .treat-chip-name { font-size: 7px; color: var(--dim); }
 
@@ -246,7 +229,7 @@ body { min-height: 100vh; }
 .legend-badge {
   display: inline-block;
   background: var(--accent);
-  color: #1A0030;
+  color: #ffffff;
   font-size: 6px;
   padding: 2px 5px;
   margin-top: 4px;
@@ -305,12 +288,12 @@ body { min-height: 100vh; }
 .feed-cta-title { font-size: 10px; color: var(--accent2); margin-bottom: 8px; }
 .feed-cta-sub { font-size: 7px; color: var(--dim); line-height: 2; margin-bottom: 12px; }
 .btn-feed {
-  background: var(--accent2); color: #1A0030; border: none;
+  background: var(--accent2); color: #ffffff; border: none;
   font-family: var(--pixel); font-size: 8px; padding: 10px 14px;
   cursor: pointer; letter-spacing: 1px;
-  box-shadow: 3px 3px 0 #802000;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
-.btn-feed:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #802000; }
+.btn-feed:hover { transform: translate(-1px,-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
 /* ── Footer ── */
 .reveal-footer {
@@ -338,13 +321,13 @@ body { min-height: 100vh; }
 
 .btn-new {
   background: var(--accent);
-  color: #1A0030;
+  color: #ffffff;
   border: none;
-  box-shadow: 3px 3px 0 #5A0090;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   transition: transform 0.05s, box-shadow 0.05s;
 }
-.btn-new:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #5A0090; }
-.btn-new:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #5A0090; }
+.btn-new:hover { transform: translate(-1px, -1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.btn-new:active { transform: translate(2px, 2px); box-shadow: none; }
 
 .footer-note {
   margin-top: 20px;

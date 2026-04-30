@@ -1,32 +1,15 @@
-/* Synko — Feeding Room */
-
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* Synko — Feeding Room (light, Slack-pet-aligned) */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:     #0E0A1A;
-  --bg2:    #1A1228;
-  --bg3:    #241A38;
-  --border: #3A2858;
-  --accent: #C060FF;
-  --accent2:#FF8040;
-  --text:   #E8D8FF;
-  --dim:    #7860A8;
-  --dark:   #3A2858;
-  --green:  #40E080;
-  --yellow: #FFD040;
-  --pixel:  'Press Start 2P', monospace;
-}
 
 html, body {
   height: 100vh; overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--pixel);
-  font-size: 8px;
-  image-rendering: pixelated;
+  font-family: var(--sans);
+  font-size: 14px;
   user-select: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Top bar ── */
@@ -75,7 +58,7 @@ html, body {
 .members-display { font-size: 7px; color: var(--dim); }
 .stage-badge {
   background: var(--accent);
-  color: #1A0030;
+  color: #ffffff;
   font-size: 7px;
   padding: 3px 7px;
   letter-spacing: 1px;
@@ -92,7 +75,7 @@ html, body {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #0A0818;
+  background: var(--bg2);
 }
 
 #scene-canvas {
@@ -256,7 +239,7 @@ html, body {
 
 .btn-done {
   background: var(--accent);
-  color: #1A0030;
+  color: #ffffff;
   border: none;
   font-family: var(--pixel);
   font-size: 7px;
@@ -264,9 +247,9 @@ html, body {
   cursor: pointer;
   width: 100%;
   letter-spacing: 1px;
-  box-shadow: 2px 2px 0 #5A0090;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
-.btn-done:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 #5A0090; }
+.btn-done:hover { transform: translate(-1px,-1px); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 
 /* ── Growth toast ── */
 .growth-toast {
@@ -310,7 +293,7 @@ html, body {
 .cele-pet-canvas { image-rendering: pixelated; }
 .cele-title {
   font-size: 20px; color: var(--accent);
-  text-shadow: 3px 3px 0 #5A0090;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
   animation: rainbow-text 2s linear infinite;
 }
 @keyframes rainbow-text {
@@ -322,13 +305,13 @@ html, body {
 .cele-sub { font-size: 10px; color: var(--dim); }
 
 .btn-cele-close {
-  background: var(--accent); color: #1A0030;
+  background: var(--accent); color: #ffffff;
   border: none; font-family: var(--pixel); font-size: 9px;
   padding: 12px 20px; cursor: pointer;
-  box-shadow: 3px 3px 0 #5A0090;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   margin-top: 8px;
 }
-.btn-cele-close:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #5A0090; }
+.btn-cele-close:hover { transform: translate(-1px,-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
