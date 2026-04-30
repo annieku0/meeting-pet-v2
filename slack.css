@@ -534,6 +534,16 @@ html, body {
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
+.notif-reason {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.5;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+.notif-reason:empty { display: none; }
+
 .notif-label {
   font-family: var(--sans);
   font-size: 11px;

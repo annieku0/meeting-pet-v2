@@ -3,17 +3,25 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
   font-size: 14px;
   line-height: 1.5;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-.screen { display: none; min-height: 100vh; }
+/* Listening screen is locked to the viewport — only the transcript scrolls.
+   The setup screen IS itself the scroll container so its content can be
+   taller than the viewport (the body has overflow:hidden, so a child has
+   to do the scrolling). */
+.screen { display: none; }
 .screen.active { display: flex; flex-direction: column; }
+#screen-listen { height: 100vh; min-height: 0; overflow: hidden; }
+#screen-listen.active { height: 100vh; }
+#screen-setup.active { height: 100vh; overflow-y: auto; }
 
 /* ── Setup screen ── */
 .setup-wrap {
@@ -177,7 +185,8 @@ html, body {
 
 /* ── Listen body — vertical stack ── */
 .listen-body {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   display: flex; flex-direction: column;
   overflow: hidden;
 }
@@ -212,7 +221,8 @@ html, body {
 
 /* Transcript feed */
 .transcript-feed-wrap {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   display: flex; flex-direction: column;
   overflow: hidden;
 }
@@ -220,9 +230,27 @@ html, body {
   font-family: var(--pixelify);
   font-size: 11px; font-weight: 600;
   color: var(--text-dim); letter-spacing: 0.5px;
-  padding: 10px 16px 8px; flex-shrink: 0;
+  padding: 8px 12px 8px 16px; flex-shrink: 0;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.btn-copy-transcript {
+  font-family: var(--pixelify);
+  font-size: 10px; font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.btn-copy-transcript:hover {
+  background: var(--bg3);
+  color: var(--text);
+  border-color: var(--text-dim);
 }
 .transcript-feed {
   flex: 1; overflow-y: auto;
@@ -300,6 +328,7 @@ html, body {
   font-size: 11px !important;
   color: var(--text-dim) !important;
   line-height: 1.6 !important;
+  flex-shrink: 0;
 }
 .diag-panel span { font-family: var(--pixelify); }
 #diag-mic-bar {

@@ -63,6 +63,34 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('btn-start-listen').addEventListener('click', startListening);
   document.getElementById('btn-end-listen').addEventListener('click', endMeeting);
+
+  // Mid-session reload only — keep the user on the setup screen for a fresh
+  // meeting (no active audio capture yet), but if a saved transcript exists
+  // for THIS session.startTime, jump straight to the listen screen and
+  // replay it. Audio still needs a fresh user gesture (getUserMedia), so
+  // they'd click "Start Listening" again to resume capture.
+  if (session?.active && session?.startTime) {
+    const savedRaw = localStorage.getItem(`mp_transcript_${session.startTime}`);
+    let hasSaved = false;
+    try { hasSaved = !!(savedRaw && JSON.parse(savedRaw)?.lines?.length); } catch {}
+    if (hasSaved) {
+      showListenScreen();
+      initListenScreen();
+      restoreTranscript();
+      const statusText = document.getElementById('listen-status-text');
+      if (statusText) statusText.textContent = 'PAUSED · click Start Listening to resume';
+    }
+  }
+
+  // Wire copy-transcript link if present in the DOM (added in listen.html).
+  const copyBtn = document.getElementById('btn-copy-transcript');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const ok = await copyTranscriptToClipboard();
+      copyBtn.textContent = ok ? '✓ copied' : '⚠ copy failed';
+      setTimeout(() => { copyBtn.textContent = '📋 copy transcript'; }, 1600);
+    });
+  }
 });
 
 // ── Setup screen ──────────────────────────────────────────────────────────────
@@ -341,10 +369,83 @@ function startWebSpeechFallback() {
   rec.start();
 }
 
-// ── Transcript UI ─────────────────────────────────────────────────────────────
+// ── Transcript UI + persistence ──────────────────────────────────────────────
+//
+// Final transcript lines are persisted to localStorage as they accumulate, so
+// a tab reload mid-meeting doesn't lose what's been transcribed. Each session
+// saves under `mp_transcript_<startTime>`; the most recent session is also
+// mirrored to `mp_transcript_last` for easy retrieval. Up to 10 historical
+// transcripts are kept (`mp_transcripts_index`) for paste-into-test reuse.
 let interimLineEl = null;
+let transcriptLines = []; // [{ speaker, text, ts }]
 
-function addTranscriptLine(text, speaker, isInterim) {
+function transcriptStorageKey() {
+  const id = session?.startTime || 'unknown';
+  return `mp_transcript_${id}`;
+}
+
+function persistTranscript() {
+  try {
+    const key = transcriptStorageKey();
+    const payload = {
+      meetingTitle: session?.meetingTitle || 'Meeting',
+      petName:      session?.petName || '',
+      startTime:    session?.startTime || Date.now(),
+      lines:        transcriptLines,
+      updatedAt:    Date.now(),
+    };
+    localStorage.setItem(key, JSON.stringify(payload));
+    localStorage.setItem('mp_transcript_last', JSON.stringify(payload));
+
+    // Maintain a rolling index of the last 10 sessions for easy access.
+    let index = [];
+    try { index = JSON.parse(localStorage.getItem('mp_transcripts_index') || '[]'); }
+    catch { index = []; }
+    if (!index.find(e => e.key === key)) {
+      index.unshift({
+        key,
+        meetingTitle: payload.meetingTitle,
+        petName:      payload.petName,
+        startTime:    payload.startTime,
+      });
+      index = index.slice(0, 10);
+      localStorage.setItem('mp_transcripts_index', JSON.stringify(index));
+    }
+  } catch (e) { /* localStorage may be quota-limited; ignore */ }
+}
+
+function restoreTranscript() {
+  try {
+    const raw = localStorage.getItem(transcriptStorageKey());
+    if (!raw) return;
+    const payload = JSON.parse(raw);
+    if (!payload?.lines?.length) return;
+    transcriptLines = payload.lines;
+    // Replay into the DOM
+    const feed = document.getElementById('transcript-feed');
+    const placeholder = feed?.querySelector('.feed-placeholder');
+    if (placeholder) placeholder.remove();
+    transcriptLines.forEach(l => renderTranscriptLine(l.text, l.speaker, false, /*skipPersist*/true));
+  } catch { /* corrupted blob — ignore */ }
+}
+
+function transcriptAsPlainText() {
+  return transcriptLines
+    .map(l => (l.speaker ? `[${l.speaker}] ` : '') + l.text)
+    .join('\n');
+}
+
+async function copyTranscriptToClipboard() {
+  const text = transcriptAsPlainText();
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function renderTranscriptLine(text, speaker, isInterim, skipPersist) {
   const feed = document.getElementById('transcript-feed');
 
   // Remove placeholder
@@ -370,12 +471,20 @@ function addTranscriptLine(text, speaker, isInterim) {
   line.appendChild(spkEl);
   line.appendChild(textEl);
 
-  if (isInterim) {
-    interimLineEl = line;
-  }
+  if (isInterim) interimLineEl = line;
 
   feed.appendChild(line);
   feed.scrollTop = feed.scrollHeight;
+
+  // Persist final lines (don't persist interim or restored ones).
+  if (!isInterim && !skipPersist) {
+    transcriptLines.push({ speaker, text, ts: Date.now() });
+    persistTranscript();
+  }
+}
+
+function addTranscriptLine(text, speaker, isInterim) {
+  renderTranscriptLine(text, speaker, isInterim, false);
 }
 
 function showInterim(text, speaker) {
@@ -579,6 +688,9 @@ function stopAudio() {
 
 // ── End meeting ───────────────────────────────────────────────────────────────
 async function endMeeting() {
+  const btn = document.getElementById('btn-end-listen');
+  if (btn) { btn.disabled = true; btn.textContent = '✦ Wrapping up…'; }
+
   // Final flush
   await flushAndAnalyze();
   stopAudio();
@@ -592,21 +704,90 @@ async function endMeeting() {
   s.endTime  = Date.now();
   await Store.set({ currentSession: s });
 
-  // Hand off to Slack as a /zoom-style report (treats granted to the initiated pet)
-  await handoffToSlack(s);
+  // Generate a Claude summary of the meeting from the persisted transcript so
+  // the slack recap has real substance even when no treat keywords matched.
+  const summary = await generateMeetingSummaryWithAI();
 
+  // Hand off to Slack as a /zoom-style report.
+  await handoffToSlack(s, summary);
+
+  // Ask the background service worker to focus the user's existing slack tab
+  // (and tell it to process the pending report) instead of navigating this
+  // tab. Falls back to opening a new tab if no slack tab is open.
   if (typeof chrome !== 'undefined' && chrome.runtime) {
-    chrome.runtime.sendMessage({ type: 'OPEN_SLACK' });
-    window.close();
+    try {
+      await chrome.runtime.sendMessage({ type: 'OPEN_SLACK_FOR_REPORT' });
+    } catch {}
+    // Close this listen tab — background will have switched focus already.
+    setTimeout(() => window.close(), 50);
   } else {
     window.location.href = 'slack.html';
+  }
+}
+
+// Build a concise meeting summary from the persisted transcript, using Claude
+// when an Anthropic key is set. Falls back to a word-count blurb otherwise.
+async function generateMeetingSummaryWithAI() {
+  const text = (transcriptLines || [])
+    .map(l => (l.speaker ? `[${l.speaker}] ` : '') + l.text)
+    .join('\n')
+    .trim();
+  if (!text) return null;
+
+  if (!anthropicKey || !anthropicKey.trim()) {
+    const wc = text.split(/\s+/).length;
+    return { headline: `Captured ${wc} words across the meeting.`, bullets: [] };
+  }
+
+  const sys = `You are summarizing a Slack-bound recap of a live meeting transcript.
+Return ONE valid JSON object only, no prose, with this shape:
+{"headline": "<1 sentence — what was the meeting about, in present tense>",
+ "bullets": ["<one short bullet capturing a topic, decision, blocker, or next step>", "..."],
+ "moments": [{"treat": "<one of: apple|cake|cookie|carrot|star|candy|blueberry|gem>", "quote": "<short quoted moment from the transcript that earned it>"}, "..."]}
+Keep "bullets" to 3-5 entries — terse, in past tense.
+"moments" only if you can quote real lines from the transcript that genuinely match these moves:
+  apple=clarifying question, cake=deadline named, cookie=process/ownership question,
+  carrot=jargon translated, star=specific action item, candy=cross-team alignment,
+  blueberry=follow-up scheduled, gem=problem resolved.
+Return [] for moments if nothing clearly qualifies. Do NOT invent quotes.`;
+  const usr = `Transcript:\n${text.slice(0, 8000)}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        system: sys,
+        messages: [{ role: 'user', content: usr }],
+      }),
+    });
+    const data = await res.json();
+    const raw = data?.content?.[0]?.text?.trim();
+    if (!raw) return null;
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const parsed = JSON.parse(m[0]);
+    return {
+      headline: String(parsed.headline || ''),
+      bullets:  Array.isArray(parsed.bullets) ? parsed.bullets.map(String) : [],
+      moments:  Array.isArray(parsed.moments) ? parsed.moments : [],
+    };
+  } catch {
+    return null;
   }
 }
 
 // Same handoff as popup.js — kept duplicated so listen.html doesn't need to
 // import popup.js. Writes a `mp_pending_zoom_report` payload that slack.js
 // picks up on next load and grants treats from.
-async function handoffToSlack(sess) {
+async function handoffToSlack(sess, summary) {
   if (!sess) return;
   const TR = {
     apple:     { emoji: '🍎', name: 'Apple',     meaning: 'Clarifying question' },
@@ -632,12 +813,43 @@ async function handoffToSlack(sess) {
   });
   const TREAT_ORDER = ['apple','cake','cookie','carrot','star','candy','blueberry','gem'];
   const bullets = [];
+
+  // Lead with the AI-generated meeting summary so the recap reads like a
+  // real meeting recap, not just a treats counter.
+  if (summary?.headline) {
+    bullets.push(`📝 <b>What happened:</b> ${escapeHtmlSimple(summary.headline)}`);
+  }
+  if (summary?.bullets?.length) {
+    summary.bullets.slice(0, 5).forEach(b => bullets.push(`• ${escapeHtmlSimple(b)}`));
+  }
+
+  // Then the treat tally (only if any).
   TREAT_ORDER.forEach(tid => {
     const count = treatsCounted[tid] || 0;
     if (count === 0) return;
     const t = TR[tid];
     bullets.push(`${t.emoji} <b>${t.name}</b> ×${count} — ${t.meaning}`);
   });
+
+  // Surface AI-detected moments that the rule-based analyzer missed (and
+  // award the matching treats so they actually land in the pet's home).
+  if (Array.isArray(summary?.moments) && summary.moments.length) {
+    summary.moments.forEach(m => {
+      const tid = m && TR[m.treat] ? m.treat : null;
+      if (!tid) return;
+      const t = TR[tid];
+      if (m.quote) bullets.push(`${t.emoji} <i>${escapeHtmlSimple(String(m.quote))}</i>`);
+      grantedTreats.push({
+        id: `t-${Date.now()}-ai-${grantedTreats.length}`,
+        treatId: tid,
+        emoji: t.emoji,
+        name: t.name,
+        meaning: t.meaning,
+        source: sess.meetingTitle || 'Live meeting',
+      });
+    });
+  }
+
   if (bullets.length === 0) {
     bullets.push("No new treat moments this round — but every meeting still teaches the pet your team's rhythm.");
   }
@@ -650,4 +862,12 @@ async function handoffToSlack(sess) {
     durationMs: (sess.endTime || Date.now()) - (sess.startTime || Date.now()),
   };
   localStorage.setItem('mp_pending_zoom_report', JSON.stringify(report));
+}
+
+function escapeHtmlSimple(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

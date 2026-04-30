@@ -310,6 +310,26 @@ a:hover { text-decoration: underline; }
   color: var(--text);
 }
 
+.btn-reset-pet {
+  align-self: flex-end;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--pixelify);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 6px;
+  margin-top: -8px;
+  letter-spacing: 0.3px;
+  border-radius: 4px;
+  transition: color 0.1s, background 0.1s;
+}
+.btn-reset-pet:hover {
+  color: var(--red);
+  background: var(--bg2);
+}
+
 .no-pet-card {
   background: var(--bg2);
   border: 1px solid var(--border);
