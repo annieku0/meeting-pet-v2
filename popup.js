@@ -662,7 +662,9 @@ async function handoffToSlack(session) {
     const count = treatsCounted[tid] || 0;
     if (count === 0) return;
     const t = TR[tid];
-    bullets.push(`${t.emoji} <b>${t.name}</b> ×${count} — ${t.meaning}`);
+    const spriteFile = tid === 'blueberry' ? 'strawberry' : tid;
+    const icon = `<img class="treat-icon" src="sprites/rewards/${spriteFile}.svg" alt="" width="18" height="18">`;
+    bullets.push(`${icon} <b>${t.name}</b> ×${count} — ${t.meaning}`);
   });
   if (bullets.length === 0) {
     bullets.push("No new treat moments this round — but every meeting still teaches the pet your team's rhythm.");

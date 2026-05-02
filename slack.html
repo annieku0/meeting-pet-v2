@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="tokens.css" />
-  <link rel="stylesheet" href="slack.css?v=13" />
+  <link rel="stylesheet" href="slack.css?v=34" />
 </head>
 <body>
 
@@ -131,6 +131,105 @@
 
     <!-- Pet stage + drop zone -->
     <div class="pet-home-stage" id="pet-home-stage">
+      <!-- Pixel-art flower meadow (decorative). -->
+      <div class="pet-home-flowers" aria-hidden="true">
+        <!-- A: purple tulip -->
+        <svg class="pet-flower flower-a" viewBox="0 0 6 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="1" y="0" width="1" height="1" fill="#c5a8db"/>
+          <rect x="3" y="0" width="1" height="1" fill="#c5a8db"/>
+          <rect x="0" y="1" width="1" height="1" fill="#a98bc4"/>
+          <rect x="1" y="1" width="1" height="1" fill="#b69bd1"/>
+          <rect x="2" y="1" width="1" height="1" fill="#9883b5"/>
+          <rect x="3" y="1" width="1" height="1" fill="#b69bd1"/>
+          <rect x="4" y="1" width="1" height="1" fill="#a98bc4"/>
+          <rect x="1" y="2" width="1" height="1" fill="#9883b5"/>
+          <rect x="2" y="2" width="1" height="1" fill="#a98bc4"/>
+          <rect x="3" y="2" width="1" height="1" fill="#9883b5"/>
+          <rect x="2" y="3" width="1" height="7" fill="#9bc586"/>
+          <rect x="1" y="6" width="1" height="1" fill="#9bc586"/>
+          <rect x="3" y="5" width="1" height="1" fill="#c2deaa"/>
+        </svg>
+        <!-- B: pink boxy flower -->
+        <svg class="pet-flower flower-b" viewBox="0 0 5 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="1" y="0" width="3" height="1" fill="#f7c4d4"/>
+          <rect x="0" y="1" width="3" height="2" fill="#e89bb7"/>
+          <rect x="3" y="1" width="1" height="2" fill="#fadbe5"/>
+          <rect x="2" y="3" width="1" height="7" fill="#9bc586"/>
+          <rect x="1" y="6" width="1" height="1" fill="#9bc586"/>
+        </svg>
+        <!-- C: yellow tulip -->
+        <svg class="pet-flower flower-c" viewBox="0 0 5 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="1" y="0" width="1" height="1" fill="#f4dc6f"/>
+          <rect x="3" y="0" width="1" height="1" fill="#f4dc6f"/>
+          <rect x="0" y="1" width="4" height="1" fill="#faea91"/>
+          <rect x="0" y="2" width="4" height="1" fill="#f4dc6f"/>
+          <rect x="2" y="3" width="1" height="7" fill="#c2deaa"/>
+          <rect x="3" y="7" width="1" height="1" fill="#9bc586"/>
+        </svg>
+        <!-- D: peach square -->
+        <svg class="pet-flower flower-d" viewBox="0 0 5 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="0" y="0" width="3" height="2" fill="#f6b790"/>
+          <rect x="2" y="0" width="1" height="1" fill="#fad0bd"/>
+          <rect x="1" y="2" width="1" height="8" fill="#9bc586"/>
+          <rect x="0" y="6" width="1" height="1" fill="#c2deaa"/>
+        </svg>
+        <!-- E: mint pinwheel (no stem, accent) -->
+        <svg class="pet-flower flower-e" viewBox="0 0 5 5" preserveAspectRatio="xMidYMid meet">
+          <rect x="2" y="0" width="1" height="1" fill="#b9e0c9"/>
+          <rect x="0" y="2" width="1" height="1" fill="#b9e0c9"/>
+          <rect x="2" y="2" width="1" height="1" fill="#d6efdf"/>
+          <rect x="4" y="2" width="1" height="1" fill="#b9e0c9"/>
+          <rect x="2" y="4" width="1" height="1" fill="#b9e0c9"/>
+        </svg>
+        <!-- F: small pink x-flower (no stem, accent) -->
+        <svg class="pet-flower flower-f" viewBox="0 0 5 5" preserveAspectRatio="xMidYMid meet">
+          <rect x="0" y="0" width="1" height="1" fill="#f7c4d4"/>
+          <rect x="4" y="0" width="1" height="1" fill="#f7c4d4"/>
+          <rect x="2" y="2" width="1" height="1" fill="#fadbe5"/>
+          <rect x="0" y="4" width="1" height="1" fill="#f7c4d4"/>
+          <rect x="4" y="4" width="1" height="1" fill="#f7c4d4"/>
+        </svg>
+        <!-- G: tall purple sprig -->
+        <svg class="pet-flower flower-g" viewBox="0 0 5 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="1" y="0" width="3" height="1" fill="#b69bd1"/>
+          <rect x="2" y="1" width="2" height="1" fill="#9883b5"/>
+          <rect x="2" y="2" width="1" height="8" fill="#9bc586"/>
+          <rect x="3" y="5" width="1" height="1" fill="#c2deaa"/>
+        </svg>
+        <!-- H: pink mini cross -->
+        <svg class="pet-flower flower-h" viewBox="0 0 5 5" preserveAspectRatio="xMidYMid meet">
+          <rect x="2" y="0" width="1" height="1" fill="#e89bb7"/>
+          <rect x="0" y="2" width="1" height="1" fill="#e89bb7"/>
+          <rect x="2" y="2" width="1" height="1" fill="#fadbe5"/>
+          <rect x="4" y="2" width="1" height="1" fill="#e89bb7"/>
+          <rect x="2" y="4" width="1" height="1" fill="#e89bb7"/>
+        </svg>
+        <!-- B-2: pink boxy (repeat) -->
+        <svg class="pet-flower flower-b flower-b-2" viewBox="0 0 5 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="1" y="0" width="3" height="1" fill="#f7c4d4"/>
+          <rect x="0" y="1" width="3" height="2" fill="#e89bb7"/>
+          <rect x="3" y="1" width="1" height="2" fill="#fadbe5"/>
+          <rect x="2" y="3" width="1" height="7" fill="#9bc586"/>
+          <rect x="1" y="6" width="1" height="1" fill="#9bc586"/>
+        </svg>
+        <!-- A-2: purple tulip (repeat) -->
+        <svg class="pet-flower flower-a flower-a-2" viewBox="0 0 6 11" preserveAspectRatio="xMidYMax meet">
+          <rect x="1" y="0" width="1" height="1" fill="#c5a8db"/>
+          <rect x="3" y="0" width="1" height="1" fill="#c5a8db"/>
+          <rect x="0" y="1" width="1" height="1" fill="#a98bc4"/>
+          <rect x="1" y="1" width="1" height="1" fill="#b69bd1"/>
+          <rect x="2" y="1" width="1" height="1" fill="#9883b5"/>
+          <rect x="3" y="1" width="1" height="1" fill="#b69bd1"/>
+          <rect x="4" y="1" width="1" height="1" fill="#a98bc4"/>
+          <rect x="1" y="2" width="1" height="1" fill="#9883b5"/>
+          <rect x="2" y="2" width="1" height="1" fill="#a98bc4"/>
+          <rect x="3" y="2" width="1" height="1" fill="#9883b5"/>
+          <rect x="2" y="3" width="1" height="7" fill="#9bc586"/>
+          <rect x="1" y="6" width="1" height="1" fill="#9bc586"/>
+          <rect x="3" y="5" width="1" height="1" fill="#c2deaa"/>
+        </svg>
+      </div>
+
       <div class="pet-home-empty" id="pet-home-empty">
         <div class="pet-home-empty-egg">🥚</div>
         <div>No pet yet.</div>
@@ -138,7 +237,7 @@
       </div>
       <div class="pet-home-pet hidden" id="pet-home-pet">
         <canvas id="pet-home-canvas" width="96" height="96"></canvas>
-        <div class="pet-home-pet-name" id="pet-home-pet-name"></div>
+        <div class="pet-home-pet-name hidden" id="pet-home-pet-name"></div>
         <div class="pet-home-drag-hint hidden" id="pet-home-drag-hint">drop a treat here to feed</div>
       </div>
     </div>
@@ -146,7 +245,21 @@
     <!-- Health bar -->
     <div class="pet-home-section pet-home-health" id="pet-home-health-section">
       <div class="pet-home-section-row">
-        <span class="pet-home-section-title">Health</span>
+        <span class="pet-home-section-title pet-home-health-title" aria-label="Health">
+          <svg class="pixel-heart" width="21" height="18" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true">
+            <g fill="#e35c54">
+              <rect x="1" y="0" width="2" height="1"/>
+              <rect x="4" y="0" width="2" height="1"/>
+              <rect x="0" y="1" width="7" height="1"/>
+              <rect x="0" y="2" width="7" height="1"/>
+              <rect x="1" y="3" width="5" height="1"/>
+              <rect x="2" y="4" width="3" height="1"/>
+            </g>
+            <rect x="3" y="5" width="1" height="1" fill="#c34b44"/>
+            <rect x="1" y="1" width="1" height="1" fill="#f5a89e"/>
+            <rect x="4" y="1" width="1" height="1" fill="#f5a89e"/>
+          </svg>
+        </span>
         <span class="pet-home-section-meta" id="pet-home-health-label">62 / 100</span>
       </div>
       <div class="pet-home-health-track">
@@ -166,7 +279,7 @@
         </div>
       </div>
       <div class="pet-home-treats-hint hidden" id="pet-home-treats-hint">
-        Drag a treat onto the pet, or click Feed.
+        Drag a treat onto the pet to feed.
       </div>
     </div>
 
@@ -236,6 +349,6 @@
 </div>
 
 <script src="pets.js?v=19"></script>
-<script src="slack.js?v=17"></script>
+<script src="slack.js?v=22"></script>
 </body>
 </html>

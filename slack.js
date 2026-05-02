@@ -85,6 +85,16 @@ const SLACK_TREATS = {
   gem:       { emoji: '💎', name: 'Gem',       meaning: 'Problem resolved' },
 };
 
+// Map treat ids to pixel-art sprite paths. blueberry has no dedicated
+// sprite yet, so it falls back to the strawberry icon.
+function treatSpritePath(treatId) {
+  const file = treatId === 'blueberry' ? 'strawberry' : treatId;
+  return `sprites/rewards/${file}.svg`;
+}
+function treatIconHTML(treatId, size = 20) {
+  return `<img class="treat-icon" src="${treatSpritePath(treatId)}" alt="" width="${size}" height="${size}">`;
+}
+
 // ── Teammates ────────────────────────────────────────────────────────────────
 const TEAMMATES = {
   Lesley: { avatar: 'L', color: '#C060FF' },
@@ -397,6 +407,15 @@ function buildMessageEl(msg) {
     return el;
   }
 
+  // Sender identity rule:
+  //   - voice: 'app'  → always "Synko" + APP tag (system / structured reports)
+  //   - voice: 'pet' (default) → pet's name + PET tag once a pet is hatched;
+  //     falls back to "Synko" + APP before any pet exists.
+  const useAppVoice = msg.voice === 'app' || !initiatedPet;
+  const senderName = useAppVoice ? 'Synko' : initiatedPet.petName;
+  const senderTag = useAppVoice ? 'APP' : 'PET';
+  const tagClass = useAppVoice ? 'synko-app-tag' : 'synko-pet-tag';
+
   // Synko ephemeral (only-you-can-see)
   if (msg.kind === 'synko-ephemeral') {
     const el = document.createElement('div');
@@ -405,7 +424,7 @@ function buildMessageEl(msg) {
       <div class="ephemeral-card">
         <div class="ephemeral-icon" id="eph-icon-${uid()}"></div>
         <div class="ephemeral-body">
-          <div class="ephemeral-tag">Only visible to you · from Synko</div>
+          <div class="ephemeral-tag">Only visible to you · from ${escapeHtml(senderName)}</div>
           <div class="ephemeral-content">${msg.html || escapeHtml(msg.text || '')}</div>
         </div>
       </div>`;
@@ -420,7 +439,7 @@ function buildMessageEl(msg) {
     return el;
   }
 
-  // Synko public (a real channel post from Synko)
+  // Synko public (a real channel post — sender chosen per the rule above)
   if (msg.kind === 'synko-public') {
     const time = msg.time || nowTime();
     const el = document.createElement('div');
@@ -429,8 +448,8 @@ function buildMessageEl(msg) {
       <div class="message-avatar" style="background:transparent"></div>
       <div class="message-content">
         <div class="message-header">
-          <span class="message-user" style="color:${initiatedPet?.accent || '#FF8040'}">Synko</span>
-          <span class="synko-app-tag">APP</span>
+          <span class="message-user" style="color:${initiatedPet?.accent || '#FF8040'}">${escapeHtml(senderName)}</span>
+          <span class="${tagClass}">${senderTag}</span>
           <span class="message-time">${time}</span>
         </div>
         <div class="message-text">${msg.html || escapeHtml(msg.text || '')}</div>
@@ -710,6 +729,7 @@ function postLiveMeetingReport({ title, bullets, treatCount }) {
   setTimeout(() => {
     postMessage(currentChannel, {
       kind: 'synko-public',
+      voice: 'app',
       time: nowTime(),
       html: zoomReportHtml({ title, bullets, treatCount }),
     });
@@ -1271,7 +1291,7 @@ or
     postMessage(channelId, {
       kind: 'synko-ephemeral',
       html: `
-        <div style="font-weight:700;margin-bottom:2px">${treat.emoji} ${escapeHtml(petName)} caught a great move — <span style="color:#b46808">${escapeHtml(treat.name)}</span> earned!</div>
+        <div style="font-weight:700;margin-bottom:2px">${treatIconHTML(parsed.treat, 18)} ${escapeHtml(petName)} caught a great move — <span style="color:#b46808">${escapeHtml(treat.name)}</span> earned!</div>
         <div style="font-size:12px;color:#1d1c1d">${escapeHtml(reason)}</div>
         <div style="font-size:11px;color:#616061;font-style:italic;margin-top:4px">Treat added to my home — feed me with it later.</div>
       `,
@@ -1292,7 +1312,12 @@ function renderPetHome() {
   petHomePet.classList.toggle('hidden', !hasPet);
 
   // Title
-  petHomeTitle.textContent = hasPet ? `${initiatedPet.petName}'s home` : 'Pet home';
+  if (hasPet) {
+    const upper = (initiatedPet.petName || '').toUpperCase();
+    petHomeTitle.innerHTML = `<span class="pet-home-title-deco" aria-hidden="true">✿</span><span class="pet-home-title-name">${escapeHtml(upper)}</span><span class="pet-home-title-deco" aria-hidden="true">✿</span>`;
+  } else {
+    petHomeTitle.textContent = 'Pet home';
+  }
 
   if (hasPet) {
     // Animated sprite
@@ -1335,13 +1360,10 @@ function renderTreatsList() {
     li.className = 'pet-home-treat';
     li.draggable = true;
     li.dataset.treatId = t.id;
+    li.title = `${t.name} — ${t.meaning}`;
     li.innerHTML = `
-      <span class="pet-home-treat-emoji">${t.emoji}</span>
-      <div class="pet-home-treat-info">
-        <div class="pet-home-treat-name">${escapeHtml(t.name)}</div>
-        <div class="pet-home-treat-meaning">${escapeHtml(t.meaning)}</div>
-      </div>
-      <button class="pet-home-treat-feed" data-treat-id="${t.id}">Feed</button>
+      <span class="pet-home-treat-emoji">${treatIconHTML(t.treatId, 32)}</span>
+      <div class="pet-home-treat-meaning">${escapeHtml(t.meaning)}</div>
     `;
     li.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('application/x-synko-treat-id', t.id);
@@ -1356,7 +1378,6 @@ function renderTreatsList() {
       petHomeStage.classList.remove('drop-hover');
       petHomeDragHint.classList.add('hidden');
     });
-    li.querySelector('.pet-home-treat-feed').addEventListener('click', () => feedTreat(t));
     petHomeTreats.appendChild(li);
   });
 }
@@ -1385,7 +1406,7 @@ function feedTreat(treat) {
   postMessage(currentChannel, {
     kind: 'synko-public',
     time: nowTime(),
-    html: `Someone just fed me a ${treat.emoji} <b>${escapeHtml(treat.name)}</b> — ${escapeHtml(treat.meaning.toLowerCase())}. Quietly celebrating that with the team 🤍`,
+    html: `Someone just fed me a ${treatIconHTML(treat.treatId, 18)} <b>${escapeHtml(treat.name)}</b> — ${escapeHtml(treat.meaning.toLowerCase())}. Quietly celebrating that with the team 🤍`,
   });
 }
 
