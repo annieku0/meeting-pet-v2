@@ -43,14 +43,7 @@ function loadInitiatedPet() {
 document.addEventListener('DOMContentLoaded', async () => {
   bindNavigation();
 
-  // First-run API key setup — gate everything until both keys are saved.
-  const { apiKey } = await Store.get('apiKey');
-  const { deepgramKey } = await Store.get('deepgramKey');
-  if (!apiKey || !deepgramKey) {
-    showScreen('setup-keys');
-    return;
-  }
-
+  // Skip API key gate in demo mode — go straight to login.
   const user = getStoredUser();
   if (!user) { showScreen('login'); return; }
 
