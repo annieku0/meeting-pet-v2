@@ -388,6 +388,35 @@ a:hover { text-decoration: underline; }
 }
 
 /* ── Active meeting screen ── */
+/* ── Back buttons ─────────────────────────────────────────────────────────── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--pixelify);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.back-btn:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+  background: var(--bg2);
+}
+
+/* Back button at top of setup-keys screen (outside header) */
+.screen-back-btn {
+  margin-bottom: 12px;
+}
+
 .meeting-header {
   display: flex;
   justify-content: space-between;

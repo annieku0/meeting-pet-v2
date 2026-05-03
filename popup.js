@@ -94,6 +94,14 @@ function bindNavigation() {
     showScreen('login');
   });
 
+  // Back buttons
+  document.getElementById('btn-setup-back').addEventListener('click', () => showScreen('login'));
+  document.getElementById('btn-meeting-back').addEventListener('click', () => {
+    const user = getStoredUser();
+    showScreen('home');
+    if (user) renderHome(user);
+  });
+
   // Open Slack
   document.getElementById('btn-go-to-slack').addEventListener('click', () => openTab('slack.html'));
 
