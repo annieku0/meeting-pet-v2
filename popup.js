@@ -138,6 +138,9 @@ function bindNavigation() {
   // Reset pet (clears mp_initiated_pet so the user can re-init in Slack)
   document.getElementById('btn-reset-pet').addEventListener('click', handleResetPet);
 
+  // Paste transcript — submit button
+  document.getElementById('btn-analyze').addEventListener('click', analyzeTranscript);
+
   // Live-meeting screen
   document.getElementById('btn-ask-everyone').addEventListener('click', () => startPoll());
   document.getElementById('btn-needs-more').addEventListener('click', () => {
