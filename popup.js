@@ -227,10 +227,12 @@ function renderHome(user) {
   const startBtn = document.getElementById('btn-start-meeting');
   const resetBtn = document.getElementById('btn-reset-pet');
 
+  // Always allow starting a meeting — paste mode works without a pet.
+  startBtn.disabled = false;
+
   if (pet) {
     initiatedCard.style.display = 'flex';
     noPetCard.style.display = 'none';
-    startBtn.disabled = false;
     if (resetBtn) resetBtn.style.display = 'inline-block';
 
     document.getElementById('initiated-pet-name').textContent = (pet.petName || 'Your Pet').toUpperCase();
@@ -272,8 +274,6 @@ async function handleResetPet() {
 // ── Start live meeting ────────────────────────────────────────────────────────
 // Shows a mode picker: live listen vs paste transcript.
 function startLiveMeeting() {
-  const pet = loadInitiatedPet();
-  if (!pet) return;
   document.getElementById('meeting-mode-modal').classList.remove('hidden');
 }
 
@@ -282,12 +282,12 @@ function hideModeModal() {
 }
 
 async function buildSession() {
-  const pet = loadInitiatedPet();
+  const pet = loadInitiatedPet();  // may be null in demo mode
   const meetingTitle = document.getElementById('meeting-title-input').value.trim() || 'Team Meeting';
   const session = {
     active: true,
-    petIndex: pet.speciesIndex ?? 0,
-    petName: pet.petName,
+    petIndex: pet?.speciesIndex ?? 0,
+    petName: pet?.petName ?? 'Synko',
     meetingTitle,
     startTime: Date.now(),
     treats: [],
