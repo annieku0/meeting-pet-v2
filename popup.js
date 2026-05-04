@@ -126,8 +126,14 @@ function bindNavigation() {
     }
   });
 
-  // Start live meeting
+  // Start live meeting — mode picker
   document.getElementById('btn-start-meeting').addEventListener('click', startLiveMeeting);
+  document.getElementById('btn-mode-live').addEventListener('click', startLiveListen);
+  document.getElementById('btn-mode-paste').addEventListener('click', startPasteMode);
+  document.getElementById('btn-mode-cancel').addEventListener('click', hideModeModal);
+  document.getElementById('meeting-mode-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('meeting-mode-modal')) hideModeModal();
+  });
 
   // Reset pet (clears mp_initiated_pet so the user can re-init in Slack)
   document.getElementById('btn-reset-pet').addEventListener('click', handleResetPet);
@@ -264,10 +270,19 @@ async function handleResetPet() {
 }
 
 // ── Start live meeting ────────────────────────────────────────────────────────
-// Real listening pipeline lives in listen.html (mic + Deepgram + Claude).
-async function startLiveMeeting() {
+// Shows a mode picker: live listen vs paste transcript.
+function startLiveMeeting() {
   const pet = loadInitiatedPet();
   if (!pet) return;
+  document.getElementById('meeting-mode-modal').classList.remove('hidden');
+}
+
+function hideModeModal() {
+  document.getElementById('meeting-mode-modal').classList.add('hidden');
+}
+
+async function buildSession() {
+  const pet = loadInitiatedPet();
   const meetingTitle = document.getElementById('meeting-title-input').value.trim() || 'Team Meeting';
   const session = {
     active: true,
@@ -280,7 +295,12 @@ async function startLiveMeeting() {
     analyzeCount: 0,
   };
   await Store.set({ currentSession: session });
+  return session;
+}
 
+async function startLiveListen() {
+  hideModeModal();
+  await buildSession();
   if (isExtension) {
     chrome.windows.create({
       url: chrome.runtime.getURL('listen.html'),
@@ -293,6 +313,13 @@ async function startLiveMeeting() {
   } else {
     window.open('listen.html', 'synko-listen', 'popup,width=420,height=720');
   }
+}
+
+async function startPasteMode() {
+  hideModeModal();
+  const session = await buildSession();
+  showScreen('meeting');
+  restoreMeetingScreen(session);
 }
 
 function restoreMeetingScreen(session) {

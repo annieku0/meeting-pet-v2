@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="tokens.css" />
-  <link rel="stylesheet" href="popup.css?v=24" />
+  <link rel="stylesheet" href="popup.css?v=25" />
 </head>
 <body>
 
@@ -179,6 +179,28 @@
     </div>
   </div>
 
+  <!-- Meeting mode picker — shown after clicking Start Live Meeting -->
+  <div id="meeting-mode-modal" class="mode-modal hidden">
+    <div class="mode-modal-inner">
+      <div class="mode-modal-title">HOW ARE YOU JOINING?</div>
+      <button class="mode-option" id="btn-mode-live">
+        <div class="mode-option-icon">🎙️</div>
+        <div class="mode-option-body">
+          <div class="mode-option-label">LIVE LISTEN</div>
+          <div class="mode-option-desc">Synko listens to your mic in real time</div>
+        </div>
+      </button>
+      <button class="mode-option" id="btn-mode-paste">
+        <div class="mode-option-icon">📋</div>
+        <div class="mode-option-body">
+          <div class="mode-option-label">PASTE TRANSCRIPT</div>
+          <div class="mode-option-desc">Copy-paste from Zoom, Meet, or Otter</div>
+        </div>
+      </button>
+      <button class="mode-cancel" id="btn-mode-cancel">cancel</button>
+    </div>
+  </div>
+
   <!-- Clarification overlay — global, shown over any screen -->
   <div id="clarification-overlay" class="poll-overlay hidden">
     <div class="poll-modal clarification-modal">
@@ -221,6 +243,6 @@
   </div>
 
   <script src="pets.js?v=19"></script>
-  <script src="popup.js?v=25"></script>
+  <script src="popup.js?v=26"></script>
 </body>
 </html>

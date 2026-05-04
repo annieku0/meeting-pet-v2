@@ -673,6 +673,91 @@ a:hover { text-decoration: underline; }
   margin-bottom: 10px;
 }
 
+/* ── Meeting mode picker modal ── */
+.mode-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.15s ease;
+}
+
+.mode-modal-inner {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 18px 16px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mode-modal-title {
+  font-family: var(--pixelify);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+.mode-option:hover {
+  border-color: var(--accent);
+  background: var(--bg3);
+}
+
+.mode-option-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mode-option-label {
+  font-family: var(--pixelify);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.mode-option-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.mode-cancel {
+  background: transparent;
+  border: none;
+  font-family: var(--pixelify);
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+  letter-spacing: 0.3px;
+}
+.mode-cancel:hover { color: var(--text); }
+
 /* ── Utility ── */
 .hidden { display: none !important; }
 
