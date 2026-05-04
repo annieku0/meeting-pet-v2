@@ -546,36 +546,46 @@ function flashFeedback(btn, msg) {
 // ── Analyze transcript ────────────────────────────────────────────────────────
 let _analyzing = false;
 async function analyzeTranscript() {
-  if (_analyzing) return;
-  _analyzing = true;
-
-  const textarea = document.getElementById('transcript-input');
-  const transcript = textarea.value.trim();
-  if (!transcript) { _analyzing = false; return; }
-
-  const btn = document.getElementById('btn-analyze');
+  const btn    = document.getElementById('btn-analyze');
   const status = document.getElementById('analysis-status');
+
+  if (_analyzing) return;
+
+  const textarea   = document.getElementById('transcript-input');
+  const transcript = textarea.value.trim();
+  if (!transcript) {
+    status.textContent = '⚠ Paste a transcript first.';
+    status.className = 'analysis-status error';
+    return;
+  }
+
+  _analyzing = true;
   btn.disabled = true;
   btn.textContent = '🐾 Analyzing...';
-  status.textContent = '';
+  status.textContent = 'Reading transcript...';
   status.className = 'analysis-status';
 
   try {
     let result;
-    if (isExtension) result = await chrome.runtime.sendMessage({ type: 'ANALYZE_TRANSCRIPT', transcript });
-    else result = await runAnalysisLocally(transcript);
+    if (isExtension) {
+      result = await chrome.runtime.sendMessage({ type: 'ANALYZE_TRANSCRIPT', transcript });
+    } else {
+      result = await runAnalysisLocally(transcript);
+    }
 
-    if (result.error) {
+    if (result && result.error) {
       status.textContent = `Error: ${result.error}`;
       status.className = 'analysis-status error';
       btn.disabled = false;
       btn.textContent = '🐾 SUBMIT TO PET';
       _analyzing = false;
     } else {
+      status.textContent = result?.message || 'Done! Sending treats to Slack...';
       await endMeeting();
     }
   } catch (e) {
-    status.textContent = 'Analysis failed — try again.';
+    console.error('[Synko] analyzeTranscript error:', e);
+    status.textContent = `Error: ${e.message || 'Analysis failed — try again.'}`;
     status.className = 'analysis-status error';
     btn.disabled = false;
     btn.textContent = '🐾 SUBMIT TO PET';
