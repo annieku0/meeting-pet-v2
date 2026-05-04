@@ -566,23 +566,12 @@ async function analyzeTranscript() {
   status.className = 'analysis-status';
 
   try {
-    let result;
-    if (isExtension) {
-      result = await chrome.runtime.sendMessage({ type: 'ANALYZE_TRANSCRIPT', transcript });
-    } else {
-      result = await runAnalysisLocally(transcript);
-    }
+    // Always analyze locally in the popup — paste mode doesn't need the
+    // background service worker, and skipping it avoids the API/close race.
+    const result = await runAnalysisLocally(transcript);
 
-    if (result && result.error) {
-      status.textContent = `Error: ${result.error}`;
-      status.className = 'analysis-status error';
-      btn.disabled = false;
-      btn.textContent = '🐾 SUBMIT TO PET';
-      _analyzing = false;
-    } else {
-      status.textContent = result?.message || 'Done! Sending treats to Slack...';
-      await endMeeting();
-    }
+    status.textContent = result.message || 'Done! Sending treats to Slack...';
+    await endMeeting();
   } catch (e) {
     console.error('[Synko] analyzeTranscript error:', e);
     status.textContent = `Error: ${e.message || 'Analysis failed — try again.'}`;
@@ -650,14 +639,8 @@ async function endMeeting() {
 
   await handoffToSlack(currentSession);
 
-  if (isExtension) {
-    // Ask the background to focus an existing slack tab (and surface the
-    // pending report there) instead of opening a duplicate.
-    try { chrome.runtime.sendMessage({ type: 'OPEN_SLACK_FOR_REPORT' }); } catch {}
-    window.close();
-  } else {
-    window.location.href = 'slack.html';
-  }
+  // Open / focus slack.html so the report is visible immediately.
+  openTab('slack.html');
 }
 
 // Build the report payload Slack will pick up via `mp_pending_zoom_report`.
