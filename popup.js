@@ -586,33 +586,90 @@ async function analyzeTranscript() {
 }
 
 async function runAnalysisLocally(transcript) {
-  const lower = transcript.toLowerCase();
+  // Keywords tuned against 10 real meeting transcripts.
+  // Matching is per-LINE — one treat of each type per line max,
+  // which prevents double-counting when multiple keywords hit the same utterance.
   const patterns = [
-    { treat: 'apple', kws: ["what do you mean", 'does that mean', 'what counts as', 'just to clarify', 'can you clarify', 'can you explain'] },
-    { treat: 'cake',  kws: ["what's the deadline", 'deadline for', 'is there a deadline', 'cutoff date', 'by when', 'when does this', 'how long do we have', "when's the"] },
-    { treat: 'cookie',kws: ["what's the process", 'how does the', 'who signs off', 'approval process', 'how do we handle', 'who owns'] },
-    { treat: 'carrot',kws: ['let me translate', "let's agree", 'standardize', 'two different things', 'mean different things', 'in this context', 'in other words', 'going forward'] },
-    { treat: 'star',  kws: ['action item', "i'll take an action item", "i'll update", "i'll send", "i'll schedule", "i'll compile", "i'll draft", "i'll have that done", 'will have that done by', 'by end of', 'by thursday', 'by friday', 'by monday'] },
-    { treat: 'candy', kws: ['both teams aligned', 'are both aligned', 'are aligned on', 'shared understanding', 'no ambiguity', 'same page', 'we are aligned', 'everyone aligned'] },
-    { treat: 'blueberry', kws: ["let's schedule", 'schedule a', "let's do a follow-up", "let's do a check", "let's set up", "i'll set up the meeting", 'follow-up review', 'circle back'] },
-    { treat: 'gem',   kws: ['we just resolved', 'just resolved', "i've corrected", 'stable now', 'this resolves', 'problem solved', 'we solved', 'that solves it', 'resolved the', 'just realized'] },
+    { treat: 'apple', kws: [
+      // Clarifying questions — asking what something means or confirms
+      'when you say', 'when we say', 'do you mean', 'does that mean',
+      'does that include', 'what does', 'what counts as', 'what do you mean',
+      'quick question', 'just to clarify', 'can you clarify', 'can you explain',
+      'are we talking about', 'do we mean', 'just to make sure',
+      'wanted to make sure', 'both refer to the same', 'is that the same',
+      'does this mean', 'or just csv', 'or both',
+    ]},
+    { treat: 'cake', kws: [
+      // Named deadlines — specific dates, cutoffs, or day-of-week targets
+      'cutoff', 'code freeze', 'design freeze', 'hard deadline',
+      'by monday', 'by tuesday', 'by wednesday', 'by thursday', 'by friday',
+      'by next friday', 'by end of week', 'last safe date',
+      'campaign goes out', 'contingent on it', 'ships first', 'when does',
+      'rotation starts', 'contract terms kick in',
+    ]},
+    { treat: 'cookie', kws: [
+      // Process or workflow questions
+      "what's the process", 'escalation process', 'escalation path',
+      'how do we handle', 'who owns', 'who signs off', 'approval process',
+      'process for requesting', 'do they need the same', 'is the runbook',
+      'should we add a ticket', 'should we document', 'triage',
+      'how do we prioritize', 'request a new test', 'request new metrics',
+    ]},
+    { treat: 'carrot', kws: [
+      // Jargon translation — defining or aligning on a term
+      'unify the naming', 'they call it', 'we call it', "we've been calling it",
+      "that's referring to", 'in other words', 'user-facing language',
+      'canonical', 'standardize on', 'is actually', 'in-app banners',
+      'different systems', 'not os-level', 'the internal api',
+      'not the same as', 'both refer to', 'refers to the same',
+    ]},
+    { treat: 'star', kws: [
+      // Specific action items committed by a named person
+      'action item', "i'll update", "i'll take", "i'll sync",
+      "i'll create", "i'll research", "i'll flag", "i'll add",
+      "i'll send", "i'll draft", "i'll set up", "i'll sign",
+      "i'll own", "i'll also", "i'll loop in", "i'll cover",
+      'will follow up', 'can you have', 'can you draft',
+    ]},
+    { treat: 'candy', kws: [
+      // Cross-team alignment confirmed
+      'both teams', 'are aligned', 'same page', 'shared understanding',
+      "we're aligned", 'all aligned', 'everyone aligned', 'no ambiguity',
+      'that aligns', 'we can work with that', 'align on',
+      'cross-team work', 'smoothest cross-team',
+    ]},
+    { treat: 'blueberry', kws: [
+      // Follow-ups or reviews explicitly scheduled
+      "let's schedule", "i'll schedule a follow-up", 'set up a follow-up',
+      'follow-up with', "let's do a follow-up", "let's sync",
+      'cross-team sync', 'cross-team session', 'follow-up in two weeks',
+      'schedule a cross-team', 'set up that call', 'set up that cross-team',
+      "i'll schedule user testing", 'alignment call',
+    ]},
+    { treat: 'gem', kws: [
+      // Problems actively resolved during the meeting
+      'i resolved', 'we resolved', 'just resolved', "that's now fixed",
+      "that's now standardized", 'fix is live', 'fix went out',
+      'root cause was', 'root cause is', 'i fixed', 'rolled back',
+      'resolved a conflict', 'resolved a long-standing', 'resolved the',
+      'is now sub-second', 'pipeline is stable',
+    ]},
   ];
 
+  // Per-line matching — one treat type per line max.
+  const lines = transcript.split('\n').filter(l => l.trim());
   const found = [];
   const moments = [];
-  for (const { treat, kws } of patterns) {
-    for (const kw of kws) {
-      let idx = 0;
-      while ((idx = lower.indexOf(kw, idx)) !== -1) {
-        found.push(treat);
-        const lineStart = transcript.lastIndexOf('\n', idx);
-        const lineEnd = transcript.indexOf('\n', idx + kw.length);
-        const quote = transcript.slice(
-          lineStart === -1 ? 0 : lineStart + 1,
-          lineEnd === -1 ? transcript.length : lineEnd
-        ).trim();
-        moments.push({ treat, quote });
-        idx += kw.length;
+
+  for (const line of lines) {
+    const lLine = line.toLowerCase();
+    for (const { treat, kws } of patterns) {
+      for (const kw of kws) {
+        if (lLine.includes(kw)) {
+          found.push(treat);
+          moments.push({ treat, quote: line.trim() });
+          break; // one of this treat type per line
+        }
       }
     }
   }
@@ -624,7 +681,12 @@ async function runAnalysisLocally(transcript) {
     currentSession.analyzeCount = (currentSession.analyzeCount || 0) + 1;
     await Store.set({ currentSession });
   }
-  return { ok: true, message: found.length > 0 ? 'Your pet noticed something interesting! 🐾' : 'Your pet is listening...' };
+  return {
+    ok: true,
+    message: found.length > 0
+      ? `Found ${found.length} treat moment${found.length !== 1 ? 's' : ''}! 🐾`
+      : 'Your pet is listening...',
+  };
 }
 
 // ── End meeting → hand off treats to Slack as a /zoom-style report ───────────
